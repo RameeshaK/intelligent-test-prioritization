@@ -1,0 +1,16 @@
+title,description,risk_level,encoded_risk
+Admin Password Hashing,The system must secure all admin credentials by hashing passwords using Argon2id with salt.,High,0
+Export Invoice PDF,Users must be able to click a button and immediately download a clean PDF version of their monthly invoice.,Medium,1
+Button Click Tracking,The system should track whenever a user clicks the upgrade button for simple analytics data collection.,Low,2
+MFA Enforcement for Admins,Force multi-factor authentication setup for any user holding system administrative privileges.,High,0
+Stripe Checkout Integration,Process customer mastercard and visa charges securely using the external Stripe API layer.,High,0
+Color Scheme Update,Modify the primary application button colors from deep blue to slate gray for modern styling.,Low,2
+SQL Injection Prevention Filter,Implement a web application firewall ruleset to parse input streams and block malicious SQL injections.,High,0
+Session Timeout Policy,Automatically terminate active user sessions and clear browser cookies after 15 minutes of idle time.,Medium,1
+Font Style Optimization,Adjust global CSS configurations to load standard system sans-serif fonts uniformly.,Low,2
+Database Failover Setup,Configure secondary replica database clusters to automatically take over operations if master fails.,High,0
+Auto-save Form Inputs,Periodically save form data drafts locally to local storage every 30 seconds to prevent data loss.,Medium,1
+Change Footer Copyright Text,Update the text in the static footer component to accurately show the current calendar year.,Low,2
+Data Encryption at Rest,All customer personal data and healthcare identifiers must be fully encrypted using AES-256 protocols.,High,0
+Generate Monthly Sales Report,Compile system transaction histories from the database into a downloadable spreadsheet file.,Medium,1
+Animate Loading Spinner,Render a lightweight spinning icon while data payloads are being fetched from the server backend.,Low,2
