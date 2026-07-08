@@ -229,22 +229,71 @@ if st.session_state.active_page == "Dashboard":
                         cursor.execute("SELECT prediction_id FROM Predictions WHERE requirement_id = ?", (requirement_id,))
                         prediction_id = cursor.fetchone()[0]
 
-                    # 4. STEP 4: Automated Functional Test Scenario Synthesizer
-                    scenarios = [
-                        {
-                            "target": f"Verify structural authentication using valid credentials via {suite_name} panel",
-                            "type": "Positive"
-                        },
-                        {
-                            "target": f"Validate input injection prevention boundary conditions and empty field flags",
-                            "type": "Boundary"
-                        },
-                        {
-                            "target": f"Validate state preservation and redirect speeds during active session load loops",
-                            "type": "Validation"
-                        }
-                    ]
+                    # 4. STEP 4: DYNAMIC AUTOMATED TEST SCENARIO SYNTHESIZER
+        
+                    story_lower = user_story_input.lower()
+                    scenarios = []
 
+                    # Rule A: Base Loading Verification
+                    if "access" in story_lower or "login" in story_lower:
+                        scenarios.append({
+                            "target": "Verify that the login page loads successfully.",
+                            "type": "Positive"
+                        })
+
+                    # Rule B: Interface Field Detection
+                    if "login" in story_lower or "username" in story_lower or "sign in" in story_lower:
+                        scenarios.append({
+                            "target": "Verify that the username field is displayed.",
+                            "type": "Validation"
+                        })
+                        scenarios.append({
+                            "target": "Verify that the password field is displayed.",
+                            "type": "Validation"
+                        })
+                        scenarios.append({
+                            "target": "Verify that the Login button is displayed.",
+                            "type": "Validation"
+                        })
+
+                    # Rule C: Core Authentication Matrix
+                    if "sign in" in story_lower or "log in" in story_lower or "access" in story_lower:
+                        scenarios.append({
+                            "target": "Verify that the user can log in with valid credentials.",
+                            "type": "Positive"
+                        })
+                        scenarios.append({
+                            "target": "Verify that an appropriate error message is displayed for invalid credentials.",
+                            "type": "Negative"
+                        })
+                        scenarios.append({
+                            "target": "Verify that mandatory field validation is displayed when required fields are left empty.",
+                            "type": "Boundary"
+                        })
+
+                    # Rule D: Navigation Transitions & Security Safeguards
+                    if "system" in story_lower or "dashboard" in story_lower or "sign in" in story_lower:
+                        scenarios.append({
+                            "target": "Verify that the user is redirected to the dashboard after a successful login.",
+                            "type": "Positive"
+                        })
+                        scenarios.append({
+                            "target": "Verify that the password is masked while typing.",
+                            "type": "Validation"
+                        })
+                        scenarios.append({
+                            "target": "Verify that the user remains on the login page after a failed login attempt.",
+                            "type": "Negative"
+                        })
+
+                    # Fallback Safeguard (If a completely unrelated story is inputted)
+                    if not scenarios:
+                        scenarios = [
+                            {"target": f"Verify baseline functional workflows for {suite_name} scenario profiles.", "type": "Positive"},
+                            {"target": f"Validate data constraints and validation metrics inside {project_name} context.", "type": "Validation"}
+                        ]
+
+                    # Loop and write the processed array dynamically into the database
                     for idx, scenario in enumerate(scenarios):
                         mock_score = float(np.round(np.random.uniform(50.0, 98.5), 2))
                         cursor.execute(
