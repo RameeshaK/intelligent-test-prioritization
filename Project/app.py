@@ -165,8 +165,8 @@ if st.session_state.active_page == "Dashboard":
                     # 3. STEP 2: NLP Parser Vector Generation Emulator
                     cleaned_tokens = " ".join(re.findall(r'\w+', user_story_input.lower()[:100]))
                     cursor.execute(
-                        "INSERT INTO NLPResults (requirement_id, cleaned_text, tokens) VALUES (?, ?, ?)",
-                        (requirement_id, user_story_input[:200], cleaned_tokens)
+                        "INSERT INTO NLPResults (requirement_id, cleaned_text, tokens, lemmas) VALUES (?, ?, ?, ?)",
+                        (requirement_id, user_story_input[:200], cleaned_tokens, cleaned_tokens)
                     )
 
                     # 4. STEP 3: Machine Learning Risk Bounds Evaluation
