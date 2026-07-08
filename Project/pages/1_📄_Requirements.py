@@ -2,14 +2,10 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 
-st.set_page_config(page_title="Requirements Explorer", page_icon="📄", layout="wide")
+# Notice: No st.set_page_config() here anymore! The master navigation manager handles it.
 
 st.markdown("""
 <style>
-    html, body, [data-testid="stAppViewContainer"], .main {
-        font-family: "Segoe UI", -apple-system, sans-serif !important;
-        background-color: #f8f9fa !important;
-    }
     .blade-title {
         border-left: 4px solid #005a9e; 
         padding-left: 16px; 
