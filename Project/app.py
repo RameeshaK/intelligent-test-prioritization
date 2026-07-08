@@ -34,14 +34,16 @@ st.markdown("""
     
     /* Premium Application Topbar Header */
     .app-header {
-        background-color: #24292e; /* Sleek, neutral dark tone */
-        padding: 12px 24px; 
-        margin: -5em -5em 2em -5em; 
+        background-color: #24292e; 
+        padding: 16px 24px; 
+        margin: -6rem -5rem 2rem -5rem; /* Increased top margin recovery to override default cloud layout offsets */
         color: white; 
         display: flex; 
         justify-content: space-between; 
         align-items: center;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        position: relative;
+        z-index: 999999; /* Forces banner layer above standard web frames */
+        font-family: "Segoe UI", -apple-system, sans-serif !important;
     }
     
     /* Structured Left-border Accent Blade Header */
