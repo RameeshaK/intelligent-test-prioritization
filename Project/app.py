@@ -18,7 +18,7 @@ st.set_page_config(
 db_path = "Project/database/requirements.db"
 models_dir = "Project/models"
 
-st.title("🏠 Intelligent Test Case Prioritization & Generation Framework")
+st.title("🏠  Test Case Prioritization & Generation Framework")
 st.markdown("This interactive portal executes natural language parsing, predictive risk indexing, and optimized test case generation workflows in real-time.")
 
 st.markdown("---")
