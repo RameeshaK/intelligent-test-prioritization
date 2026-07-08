@@ -28,7 +28,6 @@ if "active_page" not in st.session_state:
 # ==========================================
 # 2. PROACTIVE DATABASE SCHEMA INITIALIZER
 # ==========================================
-# This script runs at launch to guarantee columns exist across all pages
 try:
     init_conn = sqlite3.connect(db_path)
     init_cursor = init_conn.cursor()
@@ -229,71 +228,34 @@ if st.session_state.active_page == "Dashboard":
                         cursor.execute("SELECT prediction_id FROM Predictions WHERE requirement_id = ?", (requirement_id,))
                         prediction_id = cursor.fetchone()[0]
 
-                    # 4. STEP 4: DYNAMIC AUTOMATED TEST SCENARIO SYNTHESIZER
-        
+                    # 4. STEP 4: Dynamic Keyword-Based Functional Test Synthesizer
                     story_lower = user_story_input.lower()
                     scenarios = []
 
-                    # Rule A: Base Loading Verification
                     if "access" in story_lower or "login" in story_lower:
-                        scenarios.append({
-                            "target": "Verify that the login page loads successfully.",
-                            "type": "Positive"
-                        })
+                        scenarios.append({"target": "Verify that the login page loads successfully.", "type": "Positive"})
 
-                    # Rule B: Interface Field Detection
                     if "login" in story_lower or "username" in story_lower or "sign in" in story_lower:
-                        scenarios.append({
-                            "target": "Verify that the username field is displayed.",
-                            "type": "Validation"
-                        })
-                        scenarios.append({
-                            "target": "Verify that the password field is displayed.",
-                            "type": "Validation"
-                        })
-                        scenarios.append({
-                            "target": "Verify that the Login button is displayed.",
-                            "type": "Validation"
-                        })
+                        scenarios.append({"target": "Verify that the username field is displayed.", "type": "Validation"})
+                        scenarios.append({"target": "Verify that the password field is displayed.", "type": "Validation"})
+                        scenarios.append({"target": "Verify that the Login button is displayed.", "type": "Validation"})
 
-                    # Rule C: Core Authentication Matrix
                     if "sign in" in story_lower or "log in" in story_lower or "access" in story_lower:
-                        scenarios.append({
-                            "target": "Verify that the user can log in with valid credentials.",
-                            "type": "Positive"
-                        })
-                        scenarios.append({
-                            "target": "Verify that an appropriate error message is displayed for invalid credentials.",
-                            "type": "Negative"
-                        })
-                        scenarios.append({
-                            "target": "Verify that mandatory field validation is displayed when required fields are left empty.",
-                            "type": "Boundary"
-                        })
+                        scenarios.append({"target": "Verify that the user can log in with valid credentials.", "type": "Positive"})
+                        scenarios.append({"target": "Verify that an appropriate error message is displayed for invalid credentials.", "type": "Negative"})
+                        scenarios.append({"target": "Verify that mandatory field validation is displayed when required fields are left empty.", "type": "Boundary"})
 
-                    # Rule D: Navigation Transitions & Security Safeguards
                     if "system" in story_lower or "dashboard" in story_lower or "sign in" in story_lower:
-                        scenarios.append({
-                            "target": "Verify that the user is redirected to the dashboard after a successful login.",
-                            "type": "Positive"
-                        })
-                        scenarios.append({
-                            "target": "Verify that the password is masked while typing.",
-                            "type": "Validation"
-                        })
-                        scenarios.append({
-                            "target": "Verify that the user remains on the login page after a failed login attempt.",
-                            "type": "Negative"
-                        })
+                        scenarios.append({"target": "Verify that the user is redirected to the dashboard after a successful login.", "type": "Positive"})
+                        scenarios.append({"target": "Verify that the password is masked while typing.", "type": "Validation"})
+                        scenarios.append({"target": "Verify that the user remains on the login page after a failed login attempt.", "type": "Negative"})
 
-                    # Fallback Safeguard (If a completely unrelated story is inputted)
                     if not scenarios:
                         scenarios = [
                             {"target": f"Verify baseline functional workflows for {suite_name} scenario profiles.", "type": "Positive"},
                             {"target": f"Validate data constraints and validation metrics inside {project_name} context.", "type": "Validation"}
                         ]
 
-                    # Loop and write the processed array dynamically into the database
                     for idx, scenario in enumerate(scenarios):
                         mock_score = float(np.round(np.random.uniform(50.0, 98.5), 2))
                         cursor.execute(
@@ -339,7 +301,14 @@ if st.session_state.active_page == "Dashboard":
             view_conn.close()
         else:
             df_suite = pd.read_sql_query(f"""
-                SELECT final_rank AS [Execution Rank], test_scenario AS [Optimized Test Target], calculated_priority_score AS [Priority Score Matrix]
+                SELECT 
+                    final_rank AS [Execution Rank], 
+                    test_scenario AS [Optimized Test Target], 
+                    CASE 
+                        WHEN calculated_priority_score >= 85.0 THEN '🔴 High'
+                        WHEN calculated_priority_score >= 70.0 THEN '🟡 Medium'
+                        ELSE '🟢 Low'
+                    END AS [Priority Level]
                 FROM GeneratedTestCases 
                 WHERE project_name = '{project_name}' 
                   AND suite_name = '{suite_name}'
@@ -426,16 +395,23 @@ elif st.session_state.active_page == "TestGen":
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         
-        # Proactively look for dynamic id context identifiers
         cursor.execute("PRAGMA table_info(GeneratedTestCases)")
         cols = [r[1] for r in cursor.fetchall()]
         id_c = "tc_id" if "tc_id" in cols else ("id" if "id" in cols else (cols[0] if cols else "rowid"))
         
-        # Safe column fallbacks to prevent screen crashing on uninitialized empty tables
         p_col = "project_name" if "project_name" in cols else "'OrangeHRM'"
         s_col = "suite_name" if "suite_name" in cols else "'Login'"
         
-        query = f"SELECT {id_c} AS [ID], test_scenario AS [Scenario Target], test_objective AS [Objective Goals], expected_result AS [Expected Bounds], {p_col} AS [Project Context], {s_col} AS [Suite Name] FROM GeneratedTestCases ORDER BY ID DESC"
+        query = f"""
+            SELECT {id_c} AS [ID], test_scenario AS [Scenario Target], test_objective AS [Objective Goals], expected_result AS [Expected Bounds], 
+                   CASE 
+                       WHEN calculated_priority_score >= 85.0 THEN '🔴 High'
+                       WHEN calculated_priority_score >= 70.0 THEN '🟡 Medium'
+                       ELSE '🟢 Low'
+                   END AS [Priority Level],
+                   {p_col} AS [Project Context], {s_col} AS [Suite Name] 
+            FROM GeneratedTestCases ORDER BY ID DESC
+        """
         df = pd.read_sql_query(query, conn)
         conn.close()
         st.dataframe(df, use_container_width=True, hide_index=True)
@@ -457,7 +433,11 @@ elif st.session_state.active_page == "Prioritization":
         query = f"""
             SELECT final_rank AS [Global Execution Rank], {p_col} AS [Project Scope], 
                    {s_col} AS [Suite Context], test_scenario AS [Optimized Target Scenario], 
-                   calculated_priority_score AS [Priority Engine Score]
+                   CASE 
+                       WHEN calculated_priority_score >= 85.0 THEN '🔴 High'
+                       WHEN calculated_priority_score >= 70.0 THEN '🟡 Medium'
+                       ELSE '🟢 Low'
+                   END AS [Priority Level]
             FROM GeneratedTestCases 
             ORDER BY [Project Scope] ASC, [Suite Context] ASC, final_rank ASC
         """
