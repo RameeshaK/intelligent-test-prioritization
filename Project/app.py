@@ -10,7 +10,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 st.set_page_config(
     page_title="MSc Prioritization Framework Dashboard",
-    page_icon="🏠",
+    page_icon="🔐",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -19,23 +19,62 @@ st.set_page_config(
 db_path = "Project/database/requirements.db"
 models_dir = "Project/models"
 
+# --- SYSTEM INITIALIZATION ---
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+# --- SECTION 1: AUTHENTICATION GATEWAY ---
+if not st.session_state.authenticated:
+    st.title("🔐 Enterprise Requirement Analyzer Gateway")
+    st.markdown("### Secure Research Portal Authentication")
+    st.info("Notice: This system contains proprietary business requirements and automated test pipelines. Unauthorized access is prohibited.")
+    
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        with st.form("login_form"):
+            st.subheader("User Login")
+            username = st.text_input("Username / Email", placeholder="admin")
+            password = st.text_input("Password", type="password", placeholder="••••••••")
+            login_btn = st.form_submit_button("Sign In Securely")
+            
+            if login_btn:
+                # Core credential matching (Perfect for your presentation defense)
+                if username == "admin" and password == "msc_secure2026":
+                    st.session_state.authenticated = True
+                    st.rerun()
+                elif not username or not password:
+                    st.warning("⚠️ Please fill in all authentication fields.")
+                else:
+                    st.error("❌ Invalid credentials. System access denied.")
+    st.stop() # Stops execution here so unauthenticated users see absolutely nothing else
+
+# --- SECTION 2: AUTHENTICATED APPLICATION INTERFACE ---
+# Sidebar profile configuration
+st.sidebar.markdown("## 🔐 Secure Session")
+st.sidebar.success(st.session_state.authenticated)
+st.sidebar.info("**User Account:** System Administrator\n\n**Data Classification:** Confidencial / Internal Only")
+
+if st.sidebar.button("🚪 Log Out"):
+    st.session_state.authenticated = False
+    st.rerun()
+
 st.title("🏠 Intelligent Test Case Prioritization Framework")
-st.markdown("This interactive portal executes natural language parsing, predictive risk indexing, and optimized test case generation workflows in real-time.")
+st.markdown("Welcome back, Administrator. This secure panel processes natural language user stories into optimized functional verification queues.")
 
 st.markdown("---")
 
-# --- SECTION 1: USER INPUT INTERFACE ---
-st.subheader("➕ Add New Software Requirement")
-st.markdown("Input a raw human-language requirement below to route it through the machine learning pipeline.")
+# --- SECTION 3: USER STORY / NLP INPUT INTERFACE ---
+st.subheader("➕ Analyze New User Story / Requirement")
+st.markdown("Input a raw text story below to route it through the secure NLP parsing and risk classification engine.")
 
 with st.form("requirement_form", clear_on_submit=True):
     col_t, col_d = st.columns([1, 2])
     with col_t:
-        new_title = st.text_input("Requirement Title", placeholder="e.g., Enable FaceID Login")
+        new_title = st.text_input("User Story Title", placeholder="e.g., As an admin, I want to authenticate via FaceID")
     with col_d:
-        new_desc = st.text_area("Requirement Description", placeholder="e.g., The system must allow users to authenticate using biometric face scanning parameters securely.")
+        new_desc = st.text_area("User Story / Acceptance Criteria", placeholder="e.g., Given a registered user, when they use biometric scanning, then log them into the secure environment dashboard smoothly.")
     
-    submit_button = st.form_submit_button("⚡ Run Pipeline & Analyze Requirement")
+    submit_button = st.form_submit_button("⚡ Run Pipeline & Generate Test Cases")
 
 if submit_button:
     if not new_title.strip() or not new_desc.strip():
@@ -45,28 +84,24 @@ if submit_button:
             # 1. Load the core Random Forest model structure
             rf_model = joblib.load(os.path.join(models_dir, "random_forest_model.pkl"))
             
-            # 2. Live NLP Text Cleaning (Matching Phase 3)
+            # 2. Live NLP Text Cleaning
             combined_text = f"{new_title} {new_desc}".lower()
             cleaned_text = re.sub(r'[^a-zA-Z\s]', '', combined_text)
             
-            # 3. Direct Runtime Vectorization Base Build
+            # 3. Direct Runtime Vectorization Build
             conn = sqlite3.connect(db_path)
             backup_text = pd.read_sql_query("SELECT cleaned_text FROM NLPResults", conn)
             conn.close()
             
-            # Pull historical data to train vocabulary matrices reliably
             training_corpus = backup_text['cleaned_text'].tolist() if not backup_text.empty else []
             training_corpus.append(cleaned_text)
             
-            # Initialize and fit the vectorizer freshly in memory
             vectorizer = TfidfVectorizer(max_features=100)
-            X_train = vectorizer.fit_transform(training_corpus)
+            vectorizer.fit(training_corpus)
             
-            # Transform only the current live input row
             tfidf_vector = vectorizer.transform([cleaned_text])
             dense_vector = tfidf_vector.toarray()[0]
             
-            # Pad or truncate to match model features exactly (Ensuring 100 features input shape)
             expected_features = rf_model.n_features_in_
             if dense_vector.shape[0] < expected_features:
                 dense_vector = np.pad(dense_vector, (0, expected_features - dense_vector.shape[0]), 'constant')
@@ -79,12 +114,10 @@ if submit_button:
             pred_idx = rf_model.predict(final_input_matrix)[0]
             probabilities = rf_model.predict_proba(final_input_matrix)[0]
             
-            # Academic Mapping Matrix
             label_map = {0: "High", 1: "Medium", 2: "Low"}
             predicted_label = label_map.get(pred_idx, "Medium")
             confidence_score = probabilities[pred_idx]
             
-            # Extract word drivers safely from memory vocabulary
             feature_names = vectorizer.get_feature_names_out()
             active_indices = np.where(dense_vector[:len(feature_names)] > 0)[0]
             word_contributions = sorted(
@@ -95,44 +128,40 @@ if submit_button:
             if not explanation_str:
                 explanation_str = "Standard requirement vocabulary features applied."
 
-            # 5. Save Directly to Relational Database Tables
+            # 5. Save Securely to Relational Database Tables
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             
-            # Insert into Requirements
             cursor.execute("INSERT INTO Requirements (title, description, created_at) VALUES (?, ?, ?)", 
                            (new_title.strip(), new_desc.strip(), timestamp))
             req_id = cursor.lastrowid
             
-            # Insert into NLPResults
             tokens = cleaned_text.split()
             cursor.execute("INSERT INTO NLPResults (requirement_id, cleaned_text, tokens, lemmas, processed_at) VALUES (?, ?, ?, ?, ?)",
                            (req_id, cleaned_text, str(tokens), str(tokens), timestamp))
             
-            # Insert into Predictions
             cursor.execute("INSERT INTO Predictions (requirement_id, predicted_risk_level, confidence_score, xai_explanation, predicted_at) VALUES (?, ?, ?, ?, ?)",
                            (req_id, predicted_label, float(confidence_score), f"Top Keywords: {explanation_str}", timestamp))
             
-            # 6. Rule-Based Test Case Assignment Engine (Phase 6 Replication)
+            # 6. Rule-Based Test Case Assignment Engine (User Story Mapping)
             pred_id = cursor.lastrowid
-            if "auth" in combined_text or "login" in combined_text or "face" in combined_text:
+            if "auth" in combined_text or "login" in combined_text or "face" in combined_text or "secure" in combined_text:
                 scenarios = [
-                    ("Verify Successful Biometric Auth Processing", "Positive", "Ensure credentials validate completely.", 2.60),
-                    ("Block Malformed or Mismatched Token Access Requests", "Negative", "Prevent unauthorized system entry configurations.", 2.60)
+                    ("Verify Successful Biometric Auth Processing under Valid Token", "Positive", "Ensure credentials validate completely against hashes.", 2.60),
+                    ("Block Unauthorized Intrusions and Log Malformed Access Attempt", "Negative", "Prevent unauthorized system entry configurations and isolate session leaks.", 2.60)
                 ]
             else:
                 scenarios = [
-                    ("Verify Functional Requirement Feature UI Behaviors", "Positive", "Confirm components adhere to layout specs.", 2.00)
+                    ("Verify Functional Requirement User Story Feature UI Behaviors", "Positive", "Confirm functional components adhere to acceptance criteria.", 2.00)
                 ]
                 
             for scen, ttype, obj, p_score in scenarios:
                 cursor.execute("""
                     INSERT INTO GeneratedTestCases (requirement_id, prediction_id, test_scenario, test_objective, preconditions, test_steps, expected_result, test_case_type, calculated_priority_score, final_rank, created_at)
-                    VALUES (?, ?, ?, ?, 'System fully functional', '1. Trigger input interface.\\n2. Submit data parameters.', 'Success validation.', ?, ?, 99, ?)
+                    VALUES (?, ?, ?, ?, 'Secure session loaded', '1. Trigger input interface.\\n2. Submit data parameters.', 'Secure processing success.', ?, ?, 99, ?)
                 """, (req_id, pred_id, scen, obj, ttype, p_score, timestamp))
             
-            # Re-rank execution ranks globally (Phase 7 Replication)
             cursor.execute("""
                 UPDATE GeneratedTestCases 
                 SET final_rank = (
@@ -145,14 +174,14 @@ if submit_button:
             conn.close()
             
             st.balloons()
-            st.success(f"🎉 Pipeline completed for Requirement #{req_id}! Classified as **{predicted_label} Risk** ({confidence_score*100:.1f}% Confidence).")
+            st.success(f"🎉 Secure pipeline successfully processed User Story #{req_id}! Risk index marked as **{predicted_label}** ({confidence_score*100:.1f}% Confidence). Test cases generated.")
             
         except Exception as e:
             st.error(f"Execution Error: {e}")
 
 st.markdown("---")
 
-# --- SECTION 2: SYSTEM SUMMARY METRICS ---
+# --- SECTION 4: SYSTEM SUMMARY METRICS ---
 st.subheader("📊 System-Wide Statistics")
 
 def load_dashboard_metrics():
@@ -171,12 +200,12 @@ req_count, pred_count, tc_count, risk_df = load_dashboard_metrics()
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.metric(label="Total Requirements Logged", value=req_count)
+    st.metric(label="Total Secured Stories", value=req_count)
 with col2:
-    st.metric(label="ML Predictions Processed", value=pred_count)
+    st.metric(label="ML Classifications Processed", value=pred_count)
 with col3:
-    st.metric(label="Automated Test Cases Compiled", value=tc_count)
+    st.metric(label="Automated Test Cases Built", value=tc_count)
 
 if not risk_df.empty:
-    st.markdown("### Current Risk Classifications Summary Balance")
+    st.markdown("### Active Risk Distribution Index")
     st.dataframe(risk_df, use_container_width=True, hide_index=True)
