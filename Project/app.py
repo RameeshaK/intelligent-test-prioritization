@@ -110,6 +110,18 @@ st.markdown("<div class='app-header'><div style='font-weight: 600;'>🔬 Automat
 
 # --- VIEW A: CORE WORKSPACE & INGESTION ---
 if st.session_state.active_page == "Dashboard":
+    try:
+    purge_conn = sqlite3.connect(db_path)
+    purge_cursor = purge_conn.cursor()
+    purge_cursor.execute("DELETE FROM GeneratedTestCases")
+    purge_cursor.execute("DELETE FROM Predictions")
+    purge_cursor.execute("DELETE FROM NLPResults")
+    purge_cursor.execute("DELETE FROM Requirements")
+    purge_conn.commit()
+    purge_conn.close()
+    st.sidebar.success("🧹 Database cleared successfully!")
+except Exception as e:
+    pass
     st.markdown("<div class='blade-title'><h2>📋 Software Requirements Backlog Repository</h2><p>Parse natural language user stories dynamically into prioritized continuous testing queues.</p></div>", unsafe_allow_html=True)
     
     st.markdown("### 📁 Scope Definition")
