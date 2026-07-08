@@ -172,19 +172,51 @@ elif st.session_state.active_page == "Prediction":
     st.markdown("<div class='blade-title'><h2>🤖 ML Risk Classification Analysis Engine</h2><p>Predictive risk bounds mapping requirements to automated execution vulnerabilities</p></div>", unsafe_allow_html=True)
     try:
         conn = sqlite3.connect(db_path)
-        df = pd.read_sql_query("""
+        cursor = conn.cursor()
+        
+        # 1. Inspect column names for the Requirements table to see what the primary key is named
+        cursor.execute("PRAGMA table_info(Requirements)")
+        req_columns = [row[1] for row in cursor.fetchall()]
+        req_id_col = "id" if "id" in req_columns else ("requirement_id" if "requirement_id" in req_columns else req_columns[0])
+        req_title_col = "title" if "title" in req_columns else req_columns[1]
+
+        # 2. Inspect column names for the Predictions table to ensure everything else matches
+        cursor.execute("PRAGMA table_info(Predictions)")
+        pred_columns = [row[1] for row in cursor.fetchall()]
+        
+        pred_id_col = "prediction_id" if "prediction_id" in pred_columns else pred_columns[0]
+        fk_col = "requirement_id" if "requirement_id" in pred_columns else req_id_col
+        risk_col = "predicted_risk_level" if "predicted_risk_level" in pred_columns else "risk_level"
+        conf_col = "confidence_score" if "confidence_score" in pred_columns else "confidence"
+        xai_col = "xai_explanation" if "xai_explanation" in pred_columns else "explanation"
+        time_col = "predicted_at" if "predicted_at" in pred_columns else "timestamp"
+
+        # 3. Build a smart SQL join statement using the confirmed column matches
+        query = f"""
             SELECT 
-                p.prediction_id AS [Prediction ID], r.title AS [Requirement Title], 
-                p.predicted_risk_level AS [Predicted Risk Level], p.confidence_score AS [Confidence Score], 
-                p.xai_explanation AS [Explainable AI Log], p.predicted_at AS [Evaluation Timestamp]
-            FROM Predictions p JOIN Requirements r ON p.requirement_id = r.id
-        """, conn)
+                p.{pred_id_col} AS [Prediction ID], 
+                r.{req_title_col} AS [Requirement Title], 
+                p.{risk_col} AS [Predicted Risk Level], 
+                p.{conf_col} AS [Confidence Score], 
+                p.{xai_col} AS [Explainable AI Log], 
+                p.{time_col} AS [Evaluation Timestamp]
+            FROM Predictions p 
+            JOIN Requirements r ON p.{fk_col} = r.{req_id_col}
+        """
+        
+        df = pd.read_sql_query(query, conn)
         conn.close()
+        
         if df.empty:
             st.info("ℹ️ No pipeline logs generated. Process requirements via the dashboard matrix to log evaluation scores.")
         else:
-            df['Confidence Score'] = df['Confidence Score'].apply(lambda x: f"{x * 100:.2f}%" if isinstance(x, (int, float)) else str(x))
+            # Cleanly format the confidence score column if it is numbers
+            if '[Confidence Score]' in df.columns:
+                df['[Confidence Score]'] = df['[Confidence Score]'].apply(
+                    lambda x: f"{x * 100:.2f}%" if isinstance(x, (int, float)) and x <= 1.0 else (f"{x:.2f}%" if isinstance(x, (int, float)) else str(x))
+                )
             st.dataframe(df, use_container_width=True, hide_index=True)
+            
     except Exception as e:
         st.error(f"❌ Database Link Offline: {e}")
 
