@@ -191,7 +191,7 @@ if st.session_state.active_page == "Dashboard":
                         cursor.execute("SELECT prediction_id FROM Predictions WHERE requirement_id = ?", (requirement_id,))
                         prediction_id = cursor.fetchone()[0]
 
-                    # 4. STEP 4: Automated Functional Test Scenario Synthesizer
+                    # 4. STEP 4: Automated Functional Test Scenario Synthesizer (Fixed created_at Constraint)
                     scenarios = [
                         f"Verify structural authentication using valid credentials via {suite_name} panel",
                         f"Validate input injection prevention boundary conditions and empty field flags",
@@ -202,9 +202,9 @@ if st.session_state.active_page == "Dashboard":
                         mock_score = float(np.round(np.random.uniform(50.0, 98.5), 2))
                         cursor.execute(
                             """INSERT INTO GeneratedTestCases 
-                            (requirement_id, prediction_id, test_scenario, test_objective, test_steps, expected_result, test_case_type, calculated_priority_score, project_name, suite_name, final_rank)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                            (requirement_id, prediction_id, scenario, f"Validate scope constraint block {idx+1}", "1. Initialize target baseline state\n2. Dispatch verification vectors", "System responds inside nominal boundaries", "Functional Automated", mock_score, project_name, suite_name, 0)
+                            (requirement_id, prediction_id, test_scenario, test_objective, test_steps, expected_result, test_case_type, calculated_priority_score, project_name, suite_name, final_rank, created_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                            (requirement_id, prediction_id, scenario, f"Validate scope constraint block {idx+1}", "1. Initialize target baseline state\n2. Dispatch verification vectors", "System responds inside nominal boundaries", "Functional Automated", mock_score, project_name, suite_name, 0, current_timestamp)
                         )
 
                     # 5. STEP 5: Re-calculate prioritization ranks for this specific suite
