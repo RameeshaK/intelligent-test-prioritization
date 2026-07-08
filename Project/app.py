@@ -26,7 +26,38 @@ if "active_page" not in st.session_state:
     st.session_state.active_page = "Dashboard"
 
 # ==========================================
-# 2. SHARED USER INTERFACE STYLING (CSS)
+# 2. PROACTIVE DATABASE SCHEMA INITIALIZER
+# ==========================================
+# This script runs at launch to guarantee columns exist across all pages
+try:
+    init_conn = sqlite3.connect(db_path)
+    init_cursor = init_conn.cursor()
+    
+    # Secure Requirements Table Schema
+    init_cursor.execute("PRAGMA table_info(Requirements)")
+    req_cols = [r[1] for r in init_cursor.fetchall()]
+    if req_cols:
+        if "project_name" not in req_cols:
+            init_cursor.execute("ALTER TABLE Requirements ADD COLUMN project_name TEXT DEFAULT 'OrangeHRM'")
+        if "suite_name" not in req_cols:
+            init_cursor.execute("ALTER TABLE Requirements ADD COLUMN suite_name TEXT DEFAULT 'Login'")
+            
+    # Secure GeneratedTestCases Table Schema
+    init_cursor.execute("PRAGMA table_info(GeneratedTestCases)")
+    tc_cols = [r[1] for r in init_cursor.fetchall()]
+    if tc_cols:
+        if "project_name" not in tc_cols:
+            init_cursor.execute("ALTER TABLE GeneratedTestCases ADD COLUMN project_name TEXT DEFAULT 'OrangeHRM'")
+        if "suite_name" not in tc_cols:
+            init_cursor.execute("ALTER TABLE GeneratedTestCases ADD COLUMN suite_name TEXT DEFAULT 'Login'")
+            
+    init_conn.commit()
+    init_conn.close()
+except Exception as e:
+    pass
+
+# ==========================================
+# 3. SHARED USER INTERFACE STYLING (CSS)
 # ==========================================
 st.markdown("""
 <style>
@@ -52,7 +83,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. SECURITY GATEWAY PORTAL
+# 4. SECURITY GATEWAY PORTAL
 # ==========================================
 if not st.session_state.authenticated:
     st.markdown("<div class='app-header'><div style='font-weight: 600;'>🔬 Intelligent Test Case Prioritization Framework</div></div>", unsafe_allow_html=True)
@@ -71,7 +102,7 @@ if not st.session_state.authenticated:
     st.stop()
 
 # ==========================================
-# 4. CUSTOM SIDEBAR ROUTER
+# 5. CUSTOM SIDEBAR ROUTER
 # ==========================================
 st.sidebar.markdown("<h2 style='margin-top:0; color:#242424; font-size:18px; font-weight:600;'>🧪 Research Suite</h2>", unsafe_allow_html=True)
 
@@ -105,7 +136,7 @@ st.markdown("<div class='app-header'><div style='font-weight: 600;'>🔬 Automat
 
 
 # ==========================================
-# 5. DYNAMIC PAGE INTERACTION CONTROLLER
+# 6. DYNAMIC PAGE INTERACTION CONTROLLER
 # ==========================================
 
 # --- VIEW A: CORE WORKSPACE & INGESTION ---
@@ -161,21 +192,6 @@ if st.session_state.active_page == "Dashboard":
                     conn = sqlite3.connect(db_path)
                     cursor = conn.cursor()
 
-                    # Dynamic Schema Alignment Checks for Scoped Execution
-                    cursor.execute("PRAGMA table_info(Requirements)")
-                    req_cols = [r[1] for r in cursor.fetchall()]
-                    if "project_name" not in req_cols:
-                        cursor.execute("ALTER TABLE Requirements ADD COLUMN project_name TEXT DEFAULT 'OrangeHRM'")
-                    if "suite_name" not in req_cols:
-                        cursor.execute("ALTER TABLE Requirements ADD COLUMN suite_name TEXT DEFAULT 'Login'")
-                    
-                    cursor.execute("PRAGMA table_info(GeneratedTestCases)")
-                    tc_cols = [r[1] for r in cursor.fetchall()]
-                    if "project_name" not in tc_cols:
-                        cursor.execute("ALTER TABLE GeneratedTestCases ADD COLUMN project_name TEXT DEFAULT 'OrangeHRM'")
-                    if "suite_name" not in tc_cols:
-                        cursor.execute("ALTER TABLE GeneratedTestCases ADD COLUMN suite_name TEXT DEFAULT 'Login'")
-
                     # 1. STEP 1: Log Requirement Item
                     req_title = f"Story - {datetime.now().strftime('%H:%M:%S')}"
                     cursor.execute(
@@ -184,7 +200,7 @@ if st.session_state.active_page == "Dashboard":
                     )
                     requirement_id = cursor.lastrowid
 
-                    # 2. STEP 2: NLP Ingestion (Explicitly Populates Tokens, Lemmas, and processed_at)
+                    # 2. STEP 2: NLP Ingestion 
                     cleaned_tokens = " ".join(re.findall(r'\w+', user_story_input.lower()[:100]))
                     current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
@@ -196,7 +212,7 @@ if st.session_state.active_page == "Dashboard":
                         (requirement_id, user_story_input[:200], cleaned_tokens, cleaned_tokens, current_timestamp)
                     )
 
-                    # 3. STEP 3: Risk Classification Engine Evaluation (Fixed String Rules & ID Safeguards)
+                    # 3. STEP 3: Risk Classification Engine Evaluation
                     mock_conf = float(np.round(np.random.uniform(0.82, 0.99), 4))
                     mock_risk = np.random.choice(["High", "Medium", "Low"], p=[0.25, 0.55, 0.20])
 
@@ -213,7 +229,7 @@ if st.session_state.active_page == "Dashboard":
                         cursor.execute("SELECT prediction_id FROM Predictions WHERE requirement_id = ?", (requirement_id,))
                         prediction_id = cursor.fetchone()[0]
 
-                    # 4. STEP 4: Automated Functional Test Scenario Synthesizer (Fixed created_at & type validation)
+                    # 4. STEP 4: Automated Functional Test Scenario Synthesizer
                     scenarios = [
                         {
                             "target": f"Verify structural authentication using valid credentials via {suite_name} panel",
@@ -253,22 +269,19 @@ if st.session_state.active_page == "Dashboard":
                     conn.close()
 
                     st.success(f"✔️ Processing sequence complete! Test scenarios appended to scope collection: {project_name} ➔ {suite_name}.")
-                    
-                    # Force app refresh to display the newly added values immediately
                     time.sleep(1.0)
                     st.rerun()
 
                 except Exception as e:
                     st.error(f"⚠️ Internal Processing Interrupted: {e}")
 
-    # Display Scope Snapshot Output & Export Interface (With absolute safe check for columns)
+    # Display Scope Snapshot Output & Export Interface 
     st.markdown("---")
     st.markdown(f"### 📊 Scope Matrix Overview: <span style='color:#005a9e;'>{project_name}</span> ➔ <span style='color:#107c41;'>{suite_name}</span>", unsafe_allow_html=True)
     try:
         view_conn = sqlite3.connect(db_path)
         view_cursor = view_conn.cursor()
         
-        # Proactively check schema columns before querying to prevent 'no such column' errors
         view_cursor.execute("PRAGMA table_info(GeneratedTestCases)")
         existing_cols = [col[1] for col in view_cursor.fetchall()]
         
@@ -276,7 +289,6 @@ if st.session_state.active_page == "Dashboard":
             st.info("ℹ️ Database schema initialization pending. Run your first complete ingestion loop above to structure metrics.")
             view_conn.close()
         else:
-            # Dynamically filters to display only rows bound to your active user inputs
             df_suite = pd.read_sql_query(f"""
                 SELECT final_rank AS [Execution Rank], test_scenario AS [Optimized Test Target], calculated_priority_score AS [Priority Score Matrix]
                 FROM GeneratedTestCases 
@@ -364,11 +376,17 @@ elif st.session_state.active_page == "TestGen":
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
+        
+        # Proactively look for dynamic id context identifiers
         cursor.execute("PRAGMA table_info(GeneratedTestCases)")
         cols = [r[1] for r in cursor.fetchall()]
-        id_c = "tc_id" if "tc_id" in cols else ("id" if "id" in cols else cols[0])
+        id_c = "tc_id" if "tc_id" in cols else ("id" if "id" in cols else (cols[0] if cols else "rowid"))
         
-        query = f"SELECT {id_c} AS [ID], test_scenario AS [Scenario Target], test_objective AS [Objective Goals], expected_result AS [Expected Bounds], project_name AS [Project Context], suite_name AS [Suite Name] FROM GeneratedTestCases ORDER BY ID DESC"
+        # Safe column fallbacks to prevent screen crashing on uninitialized empty tables
+        p_col = "project_name" if "project_name" in cols else "'OrangeHRM'"
+        s_col = "suite_name" if "suite_name" in cols else "'Login'"
+        
+        query = f"SELECT {id_c} AS [ID], test_scenario AS [Scenario Target], test_objective AS [Objective Goals], expected_result AS [Expected Bounds], {p_col} AS [Project Context], {s_col} AS [Suite Name] FROM GeneratedTestCases ORDER BY ID DESC"
         df = pd.read_sql_query(query, conn)
         conn.close()
         st.dataframe(df, use_container_width=True, hide_index=True)
@@ -380,12 +398,19 @@ elif st.session_state.active_page == "Prioritization":
     st.markdown("<div class='blade-title'><h2>⭐ Test Optimization & Execution Queue Prioritization Matrix</h2><p>Calculated queue hierarchy maps ordered execution indexes derived from the analytics engine</p></div>", unsafe_allow_html=True)
     try:
         conn = sqlite3.connect(db_path)
-        query = """
-            SELECT final_rank AS [Global Execution Rank], project_name AS [Project Scope], 
-                   suite_name AS [Suite Context], test_scenario AS [Optimized Target Scenario], 
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA table_info(GeneratedTestCases)")
+        cols = [r[1] for r in cursor.fetchall()]
+        
+        p_col = "project_name" if "project_name" in cols else "'OrangeHRM'"
+        s_col = "suite_name" if "suite_name" in cols else "'Login'"
+        
+        query = f"""
+            SELECT final_rank AS [Global Execution Rank], {p_col} AS [Project Scope], 
+                   {s_col} AS [Suite Context], test_scenario AS [Optimized Target Scenario], 
                    calculated_priority_score AS [Priority Engine Score]
             FROM GeneratedTestCases 
-            ORDER BY project_name ASC, suite_name ASC, final_rank ASC
+            ORDER BY [Project Scope] ASC, [Suite Context] ASC, final_rank ASC
         """
         df = pd.read_sql_query(query, conn)
         conn.close()
