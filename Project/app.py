@@ -243,9 +243,14 @@ if st.session_state.active_page == "Dashboard":
     st.markdown(f"### 📊 Scope Matrix Overview: <span style='color:#005a9e;'>{project_name}</span> ➔ <span style='color:#107c41;'>{suite_name}</span>", unsafe_allow_html=True)
     try:
         view_conn = sqlite3.connect(db_path)
+        
+        # FIXED QUERY: Filters dynamically by the requirement item created right now
         df_suite = pd.read_sql_query(f"""
             SELECT final_rank AS [Execution Rank], test_scenario AS [Optimized Test Target], calculated_priority_score AS [Priority Score Matrix]
-            FROM GeneratedTestCases WHERE project_name = '{project_name}' AND suite_name = '{suite_name}'
+            FROM GeneratedTestCases 
+            WHERE project_name = '{project_name}' 
+              AND suite_name = '{suite_name}'
+              AND requirement_id = (SELECT MAX(requirement_id) FROM Requirements WHERE project_name='{project_name}' AND suite_name='{suite_name}')
             ORDER BY final_rank ASC
         """, view_conn)
         view_conn.close()
