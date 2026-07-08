@@ -162,9 +162,14 @@ if st.session_state.active_page == "Dashboard":
 
                     # 2. STEP 2: NLP Ingestion (Explicitly Populates Tokens AND Lemmas Columns)
                     cleaned_tokens = " ".join(re.findall(r'\w+', user_story_input.lower()[:100]))
+                    current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
                     cursor.execute(
-                        "INSERT INTO NLPResults (requirement_id, cleaned_text, tokens, lemmas) VALUES (?, ?, ?, ?)",
-                        (requirement_id, user_story_input[:200], cleaned_tokens, cleaned_tokens)
+                        """
+                        INSERT INTO NLPResults (requirement_id, cleaned_text, tokens, lemmas, processed_at) 
+                        VALUES (?, ?, ?, ?, ?)
+                        """,
+                        (requirement_id, user_story_input[:200], cleaned_tokens, cleaned_tokens, current_timestamp)
                     )
 
                     # 3. STEP 3: Risk Engine Predictions Evaluation Module
