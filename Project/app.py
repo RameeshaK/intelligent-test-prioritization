@@ -4,10 +4,11 @@ import pandas as pd
 import os
 import re
 import numpy as np
+import time
 from datetime import datetime
 
 # ==========================================
-# 1. PAGE SETUP CONFIGURATION
+# 1. CORE APPMARK PAGE CONFIGURATION
 # ==========================================
 st.set_page_config(
     page_title="Intelligent Test Case Prioritization Framework",
@@ -18,18 +19,18 @@ st.set_page_config(
 
 db_path = "Project/database/requirements.db"
 
-# Safely setup session tracking keys
+# Initialize App State Engines Safely
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "active_page" not in st.session_state:
     st.session_state.active_page = "Dashboard"
 
 # ==========================================
-# 2. SEAMLESS CLEAN USER INTERFACE STYLING
+# 2. SHARED USER INTERFACE STYLING (CSS)
 # ==========================================
 st.markdown("""
 <style>
-    /* Forcefully block the native pages sidebar from printing links */
+    /* Permanently hide Streamlit's native routing links if using custom router */
     div[data-testid="stSidebarNav"] { display: none !important; }
     
     html, body, [data-testid="stAppViewContainer"], .main {
@@ -51,7 +52,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. SECURITY GATEWAY LOGIN PORTAL
+# 3. SECURITY GATEWAY PORTAL
 # ==========================================
 if not st.session_state.authenticated:
     st.markdown("<div class='app-header'><div style='font-weight: 600;'>🔬 Intelligent Test Case Prioritization Framework</div></div>", unsafe_allow_html=True)
@@ -70,7 +71,7 @@ if not st.session_state.authenticated:
     st.stop()
 
 # ==========================================
-# 4. CUSTOM COMPACT BUTTON SIDEBAR
+# 4. CUSTOM SIDEBAR ROUTER
 # ==========================================
 st.sidebar.markdown("<h2 style='margin-top:0; color:#242424; font-size:18px; font-weight:600;'>🧪 Research Suite</h2>", unsafe_allow_html=True)
 
@@ -99,15 +100,15 @@ if st.sidebar.button("🚪 Disconnect Session", use_container_width=True):
     st.session_state.authenticated = False
     st.rerun()
 
-# Frame Top Title Branding Strip
+# Global App Header Banner
 st.markdown("<div class='app-header'><div style='font-weight: 600;'>🔬 Automated Optimization Engine &nbsp;|&nbsp; <span style='font-weight: 300;'>MSc Dissertation Research Framework</span></div><div style='font-size: 13px;'>👤 admin@university.edu</div></div>", unsafe_allow_html=True)
 
 
 # ==========================================
-# 5. WORKSPACE COMPONENT VIEW CONTROLLER
+# 5. DYNAMIC PAGE INTERACTION CONTROLLER
 # ==========================================
 
-# --- VIEW A: CORE PIPELINE DASHBOARD ---
+# --- VIEW A: CORE WORKSPACE & INGESTION ---
 if st.session_state.active_page == "Dashboard":
     st.markdown("<div class='blade-title'><h2>📋 Software Requirements Backlog Repository</h2><p>Parse natural language user stories dynamically into prioritized continuous testing queues.</p></div>", unsafe_allow_html=True)
     
@@ -137,7 +138,7 @@ if st.session_state.active_page == "Dashboard":
                     conn = sqlite3.connect(db_path)
                     cursor = conn.cursor()
 
-                    # Dynamic structural checks for table safety
+                    # Dynamic Schema Alignment Checks for Scoped Execution
                     cursor.execute("PRAGMA table_info(Requirements)")
                     req_cols = [r[1] for r in cursor.fetchall()]
                     if "project_name" not in req_cols:
@@ -160,7 +161,7 @@ if st.session_state.active_page == "Dashboard":
                     )
                     requirement_id = cursor.lastrowid
 
-                    # 2. STEP 2: NLP Ingestion (Explicitly Populates Tokens AND Lemmas Columns)
+                    # 2. STEP 2: NLP Ingestion (Explicitly Populates Tokens, Lemmas, and processed_at)
                     cleaned_tokens = " ".join(re.findall(r'\w+', user_story_input.lower()[:100]))
                     current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
@@ -172,11 +173,10 @@ if st.session_state.active_page == "Dashboard":
                         (requirement_id, user_story_input[:200], cleaned_tokens, cleaned_tokens, current_timestamp)
                     )
 
-                    # 3. STEP 3: Risk Engine Predictions Evaluation Module
+                    # 3. STEP 3: Risk Classification Engine Evaluation (Fixed String Rules & ID Safeguards)
                     mock_conf = float(np.round(np.random.uniform(0.82, 0.99), 4))
                     mock_risk = np.random.choice(["High", "Medium", "Low"], p=[0.25, 0.55, 0.20])
 
-                    # Safe handling to ensure prediction_id is always assigned an integer
                     cursor.execute(
                         """
                         INSERT OR REPLACE INTO Predictions (requirement_id, predicted_risk_level, confidence_score, xai_explanation, predicted_at) 
@@ -185,13 +185,12 @@ if st.session_state.active_page == "Dashboard":
                         (requirement_id, mock_risk, mock_conf, f"Text pattern density matches baseline risk with {mock_conf*100:.1f}% safety confidence.", current_timestamp)
                     )
                     
-                    # Explicitly fallback search or fetch to guarantee prediction_id is defined
                     prediction_id = cursor.lastrowid
                     if not prediction_id:
                         cursor.execute("SELECT prediction_id FROM Predictions WHERE requirement_id = ?", (requirement_id,))
                         prediction_id = cursor.fetchone()[0]
 
-                    # 4. STEP 4: Automated Functional Test Scenario Synthesizer (Fixed Check Constraints)
+                    # 4. STEP 4: Automated Functional Test Scenario Synthesizer (Fixed created_at & type validation)
                     scenarios = [
                         {
                             "target": f"Verify structural authentication using valid credentials via {suite_name} panel",
@@ -216,7 +215,7 @@ if st.session_state.active_page == "Dashboard":
                             (requirement_id, prediction_id, scenario["target"], f"Validate scope constraint block {idx+1}", "1. Initialize target baseline state\n2. Dispatch verification vectors", "System responds inside nominal boundaries", scenario["type"], mock_score, project_name, suite_name, 0, current_timestamp)
                         )
 
-                    # 5. STEP 5: Re-calculate prioritization ranks for this specific suite
+                    # 5. STEP 5: Dynamic Recalculation Loop for Target Scope Suite
                     cursor.execute("""
                         SELECT rowid, calculated_priority_score FROM GeneratedTestCases 
                         WHERE project_name = ? AND suite_name = ? 
@@ -230,23 +229,42 @@ if st.session_state.active_page == "Dashboard":
                     conn.commit()
                     conn.close()
 
-                    # ... (Keep all your Step 5 ranking updates exactly as they are)
-
-                    conn.commit()
-                    conn.close()
-
-                    # 1. Show the success message
                     st.success(f"✔️ Processing sequence complete! Test scenarios appended to scope collection: {project_name} ➔ {suite_name}.")
                     
-                    # 2. Add a quick visual pause, then force the screen to refresh and show the table!
-                    import time
-                    time.sleep(1.5)
+                    # Force app refresh to display the newly added values immediately
+                    time.sleep(1.0)
                     st.rerun()
 
                 except Exception as e:
                     st.error(f"⚠️ Internal Processing Interrupted: {e}")
-                    
-# --- VIEW B: REQUIREMENTS EXPLORER GRID ---
+
+    # Display Scope Snapshot Output & Export Interface (Uses safe context view_conn)
+    st.markdown("---")
+    st.markdown(f"### 📊 Scope Matrix Overview: <span style='color:#005a9e;'>{project_name}</span> ➔ <span style='color:#107c41;'>{suite_name}</span>", unsafe_allow_html=True)
+    try:
+        view_conn = sqlite3.connect(db_path)
+        df_suite = pd.read_sql_query(f"""
+            SELECT final_rank AS [Execution Rank], test_scenario AS [Optimized Test Target], calculated_priority_score AS [Priority Score Matrix]
+            FROM GeneratedTestCases WHERE project_name = '{project_name}' AND suite_name = '{suite_name}'
+            ORDER BY final_rank ASC
+        """, view_conn)
+        view_conn.close()
+        
+        if df_suite.empty:
+            st.info("ℹ️ Target scope bucket is currently empty. Run an ingestion cycle above to add test records.")
+        else:
+            st.dataframe(df_suite, use_container_width=True, hide_index=True)
+            st.download_button(
+                label="📥 Download Isolated Prioritized Test Suite Matrix (.CSV)",
+                data=df_suite.to_csv(index=False).encode('utf-8'),
+                file_name=f"{project_name.lower()}_{suite_name.lower()}_prioritization_matrix.csv",
+                mime="text/csv",
+                use_container_width=True
+            )
+    except Exception as e:
+        st.error(f"⚠️ Error displaying active data engine: {e}")
+
+# --- VIEW B: REQUIREMENTS EXPLORER ---
 elif st.session_state.active_page == "Explorer":
     st.markdown("<div class='blade-title'><h2>📋 Software Requirements Backlog Matrix</h2><p>Active Epics, Features, and Functional User Stories Baseline Matrix</p></div>", unsafe_allow_html=True)
     try:
@@ -270,7 +288,7 @@ elif st.session_state.active_page == "Explorer":
     except Exception as e:
         st.error(f"❌ Database Query Interface Link Offline: {e}")
 
-# --- VIEW C: NLP TOKEN EXPLORER PANEL ---
+# --- VIEW C: NLP PROCESSING DATA LINK ---
 elif st.session_state.active_page == "NLP":
     st.markdown("<div class='blade-title'><h2>🧠 NLP Feature Token Extraction Pipeline</h2><p>Normalized input vectors and analytical sequence processing logs</p></div>", unsafe_allow_html=True)
     try:
@@ -281,7 +299,7 @@ elif st.session_state.active_page == "NLP":
     except Exception as e:
         st.error(f"❌ Database Link Offline: {e}")
 
-# --- VIEW D: ML RISK ENGINE ANALYSIS LOGS ---
+# --- VIEW D: RISK PREDICTION LOGS ---
 elif st.session_state.active_page == "Prediction":
     st.markdown("<div class='blade-title'><h2>🤖 ML Risk Classification Analysis Engine</h2><p>Predictive risk bounds mapping requirements to automated execution vulnerabilities</p></div>", unsafe_allow_html=True)
     try:
@@ -303,7 +321,7 @@ elif st.session_state.active_page == "Prediction":
     except Exception as e:
         st.error(f"❌ Database Link Offline: {e}")
 
-# --- VIEW E: FULL SYNTHESIS TEST SUITE ---
+# --- VIEW E: FULL SCENARIOS REPOSITORY ---
 elif st.session_state.active_page == "TestGen":
     st.markdown("<div class='blade-title'><h2>🧪 Automated Functional Test Suite Matrix</h2><p>Synthesized system test coverage scenarios generated directly from user story validation logs</p></div>", unsafe_allow_html=True)
     try:
@@ -320,7 +338,7 @@ elif st.session_state.active_page == "TestGen":
     except Exception as e:
         st.error(f"❌ Database Link Offline: {e}")
 
-# --- VIEW F: GLOBAL PRIORITIZATION MATRIX ---
+# --- VIEW F: PRIORITIZATION SORT QUEUE ---
 elif st.session_state.active_page == "Prioritization":
     st.markdown("<div class='blade-title'><h2>⭐ Test Optimization & Execution Queue Prioritization Matrix</h2><p>Calculated queue hierarchy maps ordered execution indexes derived from the analytics engine</p></div>", unsafe_allow_html=True)
     try:
