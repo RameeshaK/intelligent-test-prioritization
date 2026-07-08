@@ -10,7 +10,7 @@ st.set_page_config(
 )
 
 def load_dashboard_metrics():
-    db_path = "/content/Project/database/requirements.db"
+    db_path = "Project/database/requirements.db"
     try:
         conn = sqlite3.connect(db_path)
         req_count = pd.read_sql_query("SELECT COUNT(*) as total FROM Requirements", conn)['total'].iloc[0]
