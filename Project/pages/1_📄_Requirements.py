@@ -5,7 +5,7 @@ import pandas as pd
 st.set_page_config(page_title="Requirements View", page_icon="📄", layout="wide")
 st.title("📄 Software Requirements Repository")
 
-conn = sqlite3.connect("/content/Project/database/requirements.db")
+conn = sqlite3.connect("Project/database/requirements.db")
 df = pd.read_sql_query("SELECT * FROM Requirements", conn)
 conn.close()
 
