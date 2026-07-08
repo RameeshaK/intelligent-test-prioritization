@@ -173,13 +173,20 @@ if st.session_state.active_page == "Dashboard":
                     )
 
                     # 3. STEP 3: Risk Engine Predictions Evaluation Module
-                    mock_conf = float(np.round(np.random.uniform(0.82, 0.99), 4))
-                    mock_risk = np.random.choice(["High Risk Value", "Medium Risk Value", "Low Risk Value"], p=[0.25, 0.55, 0.20])
+                     mock_conf = float(np.round(np.random.uniform(0.82, 0.99), 4))
+                    
+                    # UPDATE THESE OPTIONS TO MATCH YOUR CHECK CONSTRAINT EXACTLY:
+                    mock_risk = np.random.choice(["High", "Medium", "Low"], p=[0.25, 0.55, 0.20])
+                    
+                    current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    
                     cursor.execute(
-                        "INSERT INTO Predictions (requirement_id, predicted_risk_level, confidence_score, xai_explanation, predicted_at) VALUES (?, ?, ?, ?, ?)",
-                        (requirement_id, mock_risk, mock_conf, f"Text pattern density matches baseline risk with {mock_conf*100:.1f}% safety confidence.", datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                        """
+                        INSERT INTO Predictions (requirement_id, predicted_risk_level, confidence_score, xai_explanation, predicted_at) 
+                        VALUES (?, ?, ?, ?, ?)
+                        """,
+                        (requirement_id, mock_risk, mock_conf, f"Text pattern density matches baseline risk with {mock_conf*100:.1f}% safety confidence.", current_timestamp)
                     )
-                    prediction_id = cursor.lastrowid
 
                     # 4. STEP 4: Automated Test Synthesizer Matrix
                     scenarios = [
