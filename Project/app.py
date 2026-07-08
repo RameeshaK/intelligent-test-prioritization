@@ -116,15 +116,39 @@ elif st.session_state.active_page == "Explorer":
     st.markdown("<div class='blade-title'><h2>📋 Software Requirements Backlog Matrix</h2><p>Active Epics, Features, and Functional User Stories Baseline Matrix</p></div>", unsafe_allow_html=True)
     try:
         conn = sqlite3.connect(db_path)
-        df = pd.read_sql_query("SELECT id AS [ID], title AS [Title], description AS [Acceptance Criteria], created_at AS [Created Date] FROM Requirements", conn)
+        
+        # 1. Dynamically read the columns that actually exist in your table
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA table_info(Requirements)")
+        columns = [row[1] for row in cursor.fetchall()]
+        
+        # 2. Build a flexible query matching whatever names you have in your schema
+        id_col = "id" if "id" in columns else ("requirement_id" if "requirement_id" in columns else columns[0])
+        title_col = "title" if "title" in columns else columns[1]
+        desc_col = "description" if "description" in columns else (columns[2] if len(columns) > 2 else columns[-1])
+        date_col = "created_at" if "created_at" in columns else (columns[3] if len(columns) > 3 else columns[-1])
+        
+        query = f"""
+            SELECT 
+                {id_col} AS [ID], 
+                {title_col} AS [Title], 
+                {desc_col} AS [Acceptance Criteria]
+        """
+        if "created_at" in columns or date_col != desc_col:
+            query += f", {date_col} AS [Created Date]"
+            
+        query += " FROM Requirements"
+        
+        df = pd.read_sql_query(query, conn)
         conn.close()
+        
         if df.empty:
             st.info("ℹ️ No requirements logged in the system baseline yet.")
         else:
             st.dataframe(df, use_container_width=True, hide_index=True)
+            
     except Exception as e:
         st.error(f"❌ Database Query Interface Link Offline: {e}")
-
 # ==========================================
 # VIEW C: NLP PIPELINE
 # ==========================================
