@@ -191,11 +191,20 @@ if st.session_state.active_page == "Dashboard":
                         cursor.execute("SELECT prediction_id FROM Predictions WHERE requirement_id = ?", (requirement_id,))
                         prediction_id = cursor.fetchone()[0]
 
-                    # 4. STEP 4: Automated Functional Test Scenario Synthesizer (Fixed created_at Constraint)
+                    # 4. STEP 4: Automated Functional Test Scenario Synthesizer (Fixed Check Constraints)
                     scenarios = [
-                        f"Verify structural authentication using valid credentials via {suite_name} panel",
-                        f"Validate input injection prevention boundary conditions and empty field flags",
-                        f"Validate state preservation and redirect speeds during active session load loops"
+                        {
+                            "target": f"Verify structural authentication using valid credentials via {suite_name} panel",
+                            "type": "Positive"
+                        },
+                        {
+                            "target": f"Validate input injection prevention boundary conditions and empty field flags",
+                            "type": "Boundary"
+                        },
+                        {
+                            "target": f"Validate state preservation and redirect speeds during active session load loops",
+                            "type": "Validation"
+                        }
                     ]
 
                     for idx, scenario in enumerate(scenarios):
@@ -204,7 +213,7 @@ if st.session_state.active_page == "Dashboard":
                             """INSERT INTO GeneratedTestCases 
                             (requirement_id, prediction_id, test_scenario, test_objective, test_steps, expected_result, test_case_type, calculated_priority_score, project_name, suite_name, final_rank, created_at)
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                            (requirement_id, prediction_id, scenario, f"Validate scope constraint block {idx+1}", "1. Initialize target baseline state\n2. Dispatch verification vectors", "System responds inside nominal boundaries", "Functional Automated", mock_score, project_name, suite_name, 0, current_timestamp)
+                            (requirement_id, prediction_id, scenario["target"], f"Validate scope constraint block {idx+1}", "1. Initialize target baseline state\n2. Dispatch verification vectors", "System responds inside nominal boundaries", scenario["type"], mock_score, project_name, suite_name, 0, current_timestamp)
                         )
 
                     # 5. STEP 5: Re-calculate prioritization ranks for this specific suite
