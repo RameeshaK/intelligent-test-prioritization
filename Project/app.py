@@ -110,18 +110,6 @@ st.markdown("<div class='app-header'><div style='font-weight: 600;'>🔬 Automat
 
 # --- VIEW A: CORE WORKSPACE & INGESTION ---
 if st.session_state.active_page == "Dashboard":
-    try:
-    purge_conn = sqlite3.connect(db_path)
-    purge_cursor = purge_conn.cursor()
-    purge_cursor.execute("DELETE FROM GeneratedTestCases")
-    purge_cursor.execute("DELETE FROM Predictions")
-    purge_cursor.execute("DELETE FROM NLPResults")
-    purge_cursor.execute("DELETE FROM Requirements")
-    purge_conn.commit()
-    purge_conn.close()
-    st.sidebar.success("🧹 Database cleared successfully!")
-except Exception as e:
-    pass
     st.markdown("<div class='blade-title'><h2>📋 Software Requirements Backlog Repository</h2><p>Parse natural language user stories dynamically into prioritized continuous testing queues.</p></div>", unsafe_allow_html=True)
     
     st.markdown("### 📁 Scope Definition")
@@ -139,8 +127,31 @@ except Exception as e:
             placeholder="As a user, I want to access the login page so that I can sign in to the system.",
             height=120
         )
-        submit_btn = st.form_submit_button("🚀 Run Complete Framework Ingestion Loop")
+        
+        col_btn1, col_btn2 = st.columns([2, 1])
+        with col_btn1:
+            submit_btn = st.form_submit_button("🚀 Run Complete Framework Ingestion Loop")
+        with col_btn2:
+            clear_db_btn = st.form_submit_button("🗑️ Purge Historical Mock Backlogs")
 
+    # Action Vector: Complete Database Wipe Option
+    if clear_db_btn:
+        try:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM GeneratedTestCases")
+            cursor.execute("DELETE FROM Predictions")
+            cursor.execute("DELETE FROM NLPResults")
+            cursor.execute("DELETE FROM Requirements")
+            conn.commit()
+            conn.close()
+            st.success("🧹 All irrelevant backlogs and historical testing rows cleared successfully!")
+            time.sleep(1.0)
+            st.rerun()
+        except Exception as e:
+            st.error(f"⚠️ Purge Interrupted: {e}")
+
+    # Action Vector: Core Generation Pipeline Loop
     if submit_btn:
         if not user_story_input.strip() or not project_name.strip() or not suite_name.strip():
             st.error("❌ Scope fields and story inputs cannot be left blank.")
@@ -256,7 +267,7 @@ except Exception as e:
     try:
         view_conn = sqlite3.connect(db_path)
         
-        # FIXED QUERY: Filters dynamically by the requirement item created right now
+        # Dynamically filters to display only rows bound to your active user inputs
         df_suite = pd.read_sql_query(f"""
             SELECT final_rank AS [Execution Rank], test_scenario AS [Optimized Test Target], calculated_priority_score AS [Priority Score Matrix]
             FROM GeneratedTestCases 
