@@ -8,181 +8,133 @@ import numpy as np
 from datetime import datetime
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+# --- CLEAN INTERFACE CONFIGURATION ---
 st.set_page_config(
-    page_title="MSc Prioritization Framework Dashboard",
-    page_icon="🔐",
+    page_title="Intelligent Test Case Prioritization Framework",  # Cleared DevOps reference from browser tab
+    page_icon="🔬",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- REUSABLE DATABASE & ASSET PATH LOCATOR ---
 db_path = "Project/database/requirements.db"
 models_dir = "Project/models"
 
-# --- SYSTEM INITIALIZATION ---
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
-# --- SECTION 1: AUTHENTICATION GATEWAY ---
-if not st.session_state.authenticated:
-    st.title("🔐 Enterprise Requirement Analyzer Gateway")
-    st.markdown("### Secure Research Portal Authentication")
-    st.info("Notice: This system contains proprietary business requirements and automated test pipelines. Unauthorized access is prohibited.")
+# --- FRONTEND STRUCTURE & ALIGNMENT ENHANCEMENTS ---
+st.markdown("""
+<style>
+    /* Global Clean Typography Reset */
+    html, body, [data-testid="stAppViewContainer"], .main {
+        font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif !important;
+        background-color: #f8f9fa !important;
+        color: #333333 !important;
+    }
     
-    col1, col2 = st.columns([1, 1])
-    with col1:
+    /* Premium Application Topbar Header */
+    .app-header {
+        background-color: #24292e; /* Sleek, neutral dark tone */
+        padding: 12px 24px; 
+        margin: -5em -5em 2em -5em; 
+        color: white; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Structured Left-border Accent Blade Header */
+    .blade-title {
+        border-left: 4px solid #005a9e; /* Core institutional blue accent */
+        padding-left: 16px; 
+        margin-top: 10px;
+        margin-bottom: 25px;
+    }
+    .blade-title h2 {
+        font-size: 22px !important;
+        font-weight: 600 !important;
+        color: #242424 !important;
+        margin: 0 !important;
+    }
+    .blade-title p {
+        color: #616161 !important; 
+        margin: 4px 0 0 0 !important; 
+        font-size: 13px !important;
+    }
+
+    /* Crisp Enterprise Input Container */
+    div[data-testid="stForm"] {
+        border: 1px solid #dadada !important;
+        border-radius: 4px !important;
+        background-color: #ffffff !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+        padding: 24px !important;
+    }
+
+    /* Input Labels Alignment */
+    label p {
+        font-weight: 600 !important;
+        color: #242424 !important;
+        font-size: 13px !important;
+    }
+
+    /* Action Commit Button Layout */
+    button[kind="formSubmit"] {
+        background-color: #005a9e !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 2px !important;
+        padding: 6px 16px !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+    }
+    button[kind="formSubmit"]:hover {
+        background-color: #106ebe !important;
+    }
+
+    /* Dynamic Metric Displays Metrics Formatting */
+    div[data-testid="stMetricValue"] {
+        font-size: 26px !important; 
+        color: #005a9e !important; 
+        font-weight: 600 !important;
+    }
+    div[data-testid="stMetricLabel"] {
+        font-size: 12px !important; 
+        color: #616161 !important;
+        font-weight: 600 !important;
+        text-transform: uppercase;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# --- SECURE SPREAD ACCESSIBILITY GATEWAY ---
+if not st.session_state.authenticated:
+    st.markdown("<div class='app-header'><div style='font-weight: 600;'>🔬 Intelligent Test Case Prioritization Framework</div></div>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 1.5, 1])
+    with col2:
+        st.markdown("<div style='text-align: center; margin-top: 40px; margin-bottom: 20px;'><h2 style='font-weight:400; color:#242424;'>MSc Research Portal Sign-In</h2></div>", unsafe_allow_html=True)
         with st.form("login_form"):
-            st.subheader("User Login")
-            username = st.text_input("Username / Email", placeholder="admin")
-            password = st.text_input("Password", type="password", placeholder="••••••••")
-            login_btn = st.form_submit_button("Sign In Securely")
-            
-            if login_btn:
-                # Core credential matching (Perfect for your presentation defense)
+            username = st.text_input("Directory ID / Email", placeholder="admin")
+            password = st.text_input("Access Security Key", type="password")
+            if st.form_submit_button("Sign In"):
                 if username == "admin" and password == "msc_secure2026":
                     st.session_state.authenticated = True
                     st.rerun()
-                elif not username or not password:
-                    st.warning("⚠️ Please fill in all authentication fields.")
                 else:
-                    st.error("❌ Invalid credentials. System access denied.")
-    st.stop() # Stops execution here so unauthenticated users see absolutely nothing else
+                    st.error("❌ Access Denied. Invalid security token sequence.")
+    st.stop()
 
-# --- SECTION 2: AUTHENTICATED APPLICATION INTERFACE ---
-# Sidebar profile configuration
-st.sidebar.markdown("## 🔐 Secure Session")
-st.sidebar.success(st.session_state.authenticated)
-st.sidebar.info("**User Account:** System Administrator\n\n**Data Classification:** Confidencial / Internal Only")
+# --- MAIN DASHBOARD WORKSPACE PANELS ---
+st.markdown("<div class='app-header'><div style='font-weight: 600;'>🔬 Automated Optimization Engine &nbsp;|&nbsp; <span style='font-weight: 300;'>MSc Dissertation Research Framework</span></div><div style='font-size: 13px;'>👤 admin@university.edu</div></div>", unsafe_allow_html=True)
 
-if st.sidebar.button("🚪 Log Out"):
+st.sidebar.markdown("<h4 style='margin-top:0; color:#242424;'>⚙️ Framework Controls</h4>", unsafe_allow_html=True)
+st.sidebar.markdown("<p style='font-size:12px; color:gray;'>Pipeline Context: <b>Active Sprint Run</b></p>", unsafe_allow_html=True)
+if st.sidebar.button("🚪 Disconnect Session", use_container_width=True):
     st.session_state.authenticated = False
     st.rerun()
 
-st.title("🏠 Intelligent Test Case Prioritization Framework")
-st.markdown("Welcome back, Administrator. This secure panel processes natural language user stories into optimized functional verification queues.")
-
-st.markdown("---")
-
-# --- SECTION 3: USER STORY / NLP INPUT INTERFACE ---
-st.subheader("➕ Analyze New User Story / Requirement")
-st.markdown("Input a raw text story below to route it through the secure NLP parsing and risk classification engine.")
-
-with st.form("requirement_form", clear_on_submit=True):
-    col_t, col_d = st.columns([1, 2])
-    with col_t:
-        new_title = st.text_input("User Story Title", placeholder="e.g., As an admin, I want to authenticate via FaceID")
-    with col_d:
-        new_desc = st.text_area("User Story / Acceptance Criteria", placeholder="e.g., Given a registered user, when they use biometric scanning, then log them into the secure environment dashboard smoothly.")
-    
-    submit_button = st.form_submit_button("⚡ Run Pipeline & Generate Test Cases")
-
-if submit_button:
-    if not new_title.strip() or not new_desc.strip():
-        st.error("⚠️ Both Title and Description fields are strictly required.")
-    else:
-        try:
-            # 1. Load the core Random Forest model structure
-            rf_model = joblib.load(os.path.join(models_dir, "random_forest_model.pkl"))
-            
-            # 2. Live NLP Text Cleaning
-            combined_text = f"{new_title} {new_desc}".lower()
-            cleaned_text = re.sub(r'[^a-zA-Z\s]', '', combined_text)
-            
-            # 3. Direct Runtime Vectorization Build
-            conn = sqlite3.connect(db_path)
-            backup_text = pd.read_sql_query("SELECT cleaned_text FROM NLPResults", conn)
-            conn.close()
-            
-            training_corpus = backup_text['cleaned_text'].tolist() if not backup_text.empty else []
-            training_corpus.append(cleaned_text)
-            
-            vectorizer = TfidfVectorizer(max_features=100)
-            vectorizer.fit(training_corpus)
-            
-            tfidf_vector = vectorizer.transform([cleaned_text])
-            dense_vector = tfidf_vector.toarray()[0]
-            
-            expected_features = rf_model.n_features_in_
-            if dense_vector.shape[0] < expected_features:
-                dense_vector = np.pad(dense_vector, (0, expected_features - dense_vector.shape[0]), 'constant')
-            elif dense_vector.shape[0] > expected_features:
-                dense_vector = dense_vector[:expected_features]
-                
-            final_input_matrix = dense_vector.reshape(1, -1)
-
-            # 4. Model Inference & XAI Processing
-            pred_idx = rf_model.predict(final_input_matrix)[0]
-            probabilities = rf_model.predict_proba(final_input_matrix)[0]
-            
-            label_map = {0: "High", 1: "Medium", 2: "Low"}
-            predicted_label = label_map.get(pred_idx, "Medium")
-            confidence_score = probabilities[pred_idx]
-            
-            feature_names = vectorizer.get_feature_names_out()
-            active_indices = np.where(dense_vector[:len(feature_names)] > 0)[0]
-            word_contributions = sorted(
-                [(feature_names[i], 0.05) for i in active_indices],
-                key=lambda x: x[1], reverse=True
-            )[:3]
-            explanation_str = ", ".join([f"'{w}'" for w, wt in word_contributions])
-            if not explanation_str:
-                explanation_str = "Standard requirement vocabulary features applied."
-
-            # 5. Save Securely to Relational Database Tables
-            conn = sqlite3.connect(db_path)
-            cursor = conn.cursor()
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            
-            cursor.execute("INSERT INTO Requirements (title, description, created_at) VALUES (?, ?, ?)", 
-                           (new_title.strip(), new_desc.strip(), timestamp))
-            req_id = cursor.lastrowid
-            
-            tokens = cleaned_text.split()
-            cursor.execute("INSERT INTO NLPResults (requirement_id, cleaned_text, tokens, lemmas, processed_at) VALUES (?, ?, ?, ?, ?)",
-                           (req_id, cleaned_text, str(tokens), str(tokens), timestamp))
-            
-            cursor.execute("INSERT INTO Predictions (requirement_id, predicted_risk_level, confidence_score, xai_explanation, predicted_at) VALUES (?, ?, ?, ?, ?)",
-                           (req_id, predicted_label, float(confidence_score), f"Top Keywords: {explanation_str}", timestamp))
-            
-            # 6. Rule-Based Test Case Assignment Engine (User Story Mapping)
-            pred_id = cursor.lastrowid
-            if "auth" in combined_text or "login" in combined_text or "face" in combined_text or "secure" in combined_text:
-                scenarios = [
-                    ("Verify Successful Biometric Auth Processing under Valid Token", "Positive", "Ensure credentials validate completely against hashes.", 2.60),
-                    ("Block Unauthorized Intrusions and Log Malformed Access Attempt", "Negative", "Prevent unauthorized system entry configurations and isolate session leaks.", 2.60)
-                ]
-            else:
-                scenarios = [
-                    ("Verify Functional Requirement User Story Feature UI Behaviors", "Positive", "Confirm functional components adhere to acceptance criteria.", 2.00)
-                ]
-                
-            for scen, ttype, obj, p_score in scenarios:
-                cursor.execute("""
-                    INSERT INTO GeneratedTestCases (requirement_id, prediction_id, test_scenario, test_objective, preconditions, test_steps, expected_result, test_case_type, calculated_priority_score, final_rank, created_at)
-                    VALUES (?, ?, ?, ?, 'Secure session loaded', '1. Trigger input interface.\\n2. Submit data parameters.', 'Secure processing success.', ?, ?, 99, ?)
-                """, (req_id, pred_id, scen, obj, ttype, p_score, timestamp))
-            
-            cursor.execute("""
-                UPDATE GeneratedTestCases 
-                SET final_rank = (
-                    SELECT COUNT(*) + 1 FROM GeneratedTestCases g2 
-                    WHERE g2.calculated_priority_score > GeneratedTestCases.calculated_priority_score
-                )
-            """)
-            
-            conn.commit()
-            conn.close()
-            
-            st.balloons()
-            st.success(f"🎉 Secure pipeline successfully processed User Story #{req_id}! Risk index marked as **{predicted_label}** ({confidence_score*100:.1f}% Confidence). Test cases generated.")
-            
-        except Exception as e:
-            st.error(f"Execution Error: {e}")
-
-st.markdown("---")
-
-# --- SECTION 4: SYSTEM SUMMARY METRICS ---
-st.subheader("📊 System-Wide Statistics")
+st.markdown("<div class='blade-title'><h2>📋 Software Requirements Backlog Repository</h2><p>Parse natural language user stories dynamically into prioritized continuous testing and validation queues.</p></div>", unsafe_allow_html=True)
 
 def load_dashboard_metrics():
     try:
@@ -190,7 +142,7 @@ def load_dashboard_metrics():
         req_count = pd.read_sql_query("SELECT COUNT(*) as total FROM Requirements", conn)['total'].iloc[0]
         pred_count = pd.read_sql_query("SELECT COUNT(*) as total FROM Predictions", conn)['total'].iloc[0]
         tc_count = pd.read_sql_query("SELECT COUNT(*) as total FROM GeneratedTestCases", conn)['total'].iloc[0]
-        risk_df = pd.read_sql_query("SELECT predicted_risk_level, COUNT(*) as count FROM Predictions GROUP BY predicted_risk_level", conn)
+        risk_df = pd.read_sql_query("SELECT predicted_risk_level AS [Risk Category], COUNT(*) as [Work Items Count] FROM Predictions GROUP BY predicted_risk_level", conn)
         conn.close()
         return req_count, pred_count, tc_count, risk_df
     except Exception:
@@ -200,12 +152,77 @@ req_count, pred_count, tc_count, risk_df = load_dashboard_metrics()
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.metric(label="Total Secured Stories", value=req_count)
+    st.metric(label="Total Logged Requirements", value=req_count)
 with col2:
-    st.metric(label="ML Classifications Processed", value=pred_count)
+    st.metric(label="Evaluated ML Risk Indexes", value=pred_count)
 with col3:
-    st.metric(label="Automated Test Cases Built", value=tc_count)
+    st.metric(label="Automated Test Scenarios Created", value=tc_count)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+st.markdown("### ➕ Analyze New User Story / Requirement Requirement")
+with st.form("requirement_form", clear_on_submit=True):
+    col_t, col_d = st.columns([1, 2])
+    with col_t:
+        new_title = st.text_input("Requirement Title", placeholder="As a system user...")
+    with col_d:
+        new_desc = st.text_area("Acceptance Criteria Details", placeholder="Given some initial context, when an action happens, then validate results...")
+    submit_button = st.form_submit_button("⚡ Commit Content to Framework Pipeline")
+
+if submit_button and new_title.strip() and new_desc.strip():
+    try:
+        rf_model = joblib.load(os.path.join(models_dir, "random_forest_model.pkl"))
+        combined_text = f"{new_title} {new_desc}".lower()
+        cleaned_text = re.sub(r'[^a-zA-Z\s]', '', combined_text)
+        
+        conn = sqlite3.connect(db_path)
+        backup_text = pd.read_sql_query("SELECT cleaned_text FROM NLPResults", conn)
+        conn.close()
+        
+        training_corpus = backup_text['cleaned_text'].tolist() if not backup_text.empty else []
+        training_corpus.append(cleaned_text)
+        
+        vectorizer = TfidfVectorizer(max_features=100)
+        vectorizer.fit(training_corpus)
+        tfidf_vector = vectorizer.transform([cleaned_text])
+        dense_vector = tfidf_vector.toarray()[0]
+        
+        expected_features = rf_model.n_features_in_
+        if dense_vector.shape[0] < expected_features:
+            dense_vector = np.pad(dense_vector, (0, expected_features - dense_vector.shape[0]), 'constant')
+        elif dense_vector.shape[0] > expected_features:
+            dense_vector = dense_vector[:expected_features]
+            
+        final_input_matrix = dense_vector.reshape(1, -1)
+        pred_idx = rf_model.predict(final_input_matrix)[0]
+        probabilities = rf_model.predict_proba(final_input_matrix)[0]
+        
+        label_map = {0: "High", 1: "Medium", 2: "Low"}
+        predicted_label = label_map.get(pred_idx, "Medium")
+        confidence_score = probabilities[pred_idx]
+        
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        cursor.execute("INSERT INTO Requirements (title, description, created_at) VALUES (?, ?, ?)", (new_title.strip(), new_desc.strip(), timestamp))
+        req_id = cursor.lastrowid
+        cursor.execute("INSERT INTO NLPResults (requirement_id, cleaned_text, tokens, lemmas, processed_at) VALUES (?, ?, ?, ?, ?)", (req_id, cleaned_text, str(cleaned_text.split()), str(cleaned_text.split()), timestamp))
+        cursor.execute("INSERT INTO Predictions (requirement_id, predicted_risk_level, confidence_score, xai_explanation, predicted_at) VALUES (?, ?, ?, ?, ?)", (req_id, predicted_label, float(confidence_score), "Top Keywords used", timestamp))
+        
+        pred_id = cursor.lastrowid
+        scenarios = [("Verify Functional Requirement User Story Feature UI", "Positive", "Confirm components adhere to specs.", 2.00)]
+        for scen, ttype, obj, p_score in scenarios:
+            cursor.execute("INSERT INTO GeneratedTestCases (requirement_id, prediction_id, test_scenario, test_objective, preconditions, test_steps, expected_result, test_case_type, calculated_priority_score, final_rank, created_at) VALUES (?, ?, ?, ?, 'Secure session loaded', '1. Input.', 'Success.', ?, ?, 99, ?)", (req_id, pred_id, scen, obj, ttype, p_score, timestamp))
+        
+        cursor.execute("UPDATE GeneratedTestCases SET final_rank = (SELECT COUNT(*) + 1 FROM GeneratedTestCases g2 WHERE g2.calculated_priority_score > GeneratedTestCases.calculated_priority_score)")
+        conn.commit()
+        conn.close()
+        st.success("🚀 Work Item Committed.")
+        st.rerun()
+    except Exception as e:
+        st.error(f"Error: {e}")
 
 if not risk_df.empty:
-    st.markdown("### Active Risk Distribution Index")
+    st.markdown("### 📊 Active Repository Risk Balance Index Summary")
     st.dataframe(risk_df, use_container_width=True, hide_index=True)
