@@ -172,14 +172,22 @@ if st.session_state.active_page == "Dashboard":
                         (requirement_id, user_story_input[:200], cleaned_tokens, cleaned_tokens, current_timestamp)
                     )
 
-                    # 3. STEP 3: Risk Engine Predictions Evaluation Module
-                     mock_conf = float(np.round(np.random.uniform(0.82, 0.99), 4))
-                    
-                    # UPDATE THESE OPTIONS TO MATCH YOUR CHECK CONSTRAINT EXACTLY:
-                    mock_risk = np.random.choice(["High", "Medium", "Low"], p=[0.25, 0.55, 0.20])
-                    
+# STEP 2: NLP Results Ingestion
+                    cleaned_tokens = " ".join(re.findall(r'\w+', user_story_input.lower()[:100]))
                     current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    
+
+                    cursor.execute(
+                        """
+                        INSERT INTO NLPResults (requirement_id, cleaned_text, tokens, lemmas, processed_at) 
+                        VALUES (?, ?, ?, ?, ?)
+                        """,
+                        (requirement_id, user_story_input[:200], cleaned_tokens, cleaned_tokens, current_timestamp)
+                    )
+
+                    # STEP 3: Risk Engine Predictions Evaluation Module
+                    mock_conf = float(np.round(np.random.uniform(0.82, 0.99), 4))
+                    mock_risk = np.random.choice(["High", "Medium", "Low"], p=[0.25, 0.55, 0.20])
+
                     cursor.execute(
                         """
                         INSERT INTO Predictions (requirement_id, predicted_risk_level, confidence_score, xai_explanation, predicted_at) 
@@ -187,22 +195,6 @@ if st.session_state.active_page == "Dashboard":
                         """,
                         (requirement_id, mock_risk, mock_conf, f"Text pattern density matches baseline risk with {mock_conf*100:.1f}% safety confidence.", current_timestamp)
                     )
-
-                    # 4. STEP 4: Automated Test Synthesizer Matrix
-                    scenarios = [
-                        f"Verify structural authentication using valid credentials via {suite_name} panel",
-                        f"Validate input injection prevention boundary conditions and empty field flags",
-                        f"Validate state preservation and redirect speeds during active session load loops"
-                    ]
-
-                    for idx, scenario in enumerate(scenarios):
-                        mock_score = float(np.round(np.random.uniform(50.0, 98.5), 2))
-                        cursor.execute(
-                            """INSERT INTO GeneratedTestCases 
-                            (requirement_id, prediction_id, test_scenario, test_objective, test_steps, expected_result, test_case_type, calculated_priority_score, project_name, suite_name, final_rank)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                            (requirement_id, prediction_id, scenario, f"Validate scope constraint block {idx+1}", "1. Initialize target baseline state\n2. Dispatch verification vectors", "System responds inside nominal boundaries", "Functional Automated", mock_score, project_name, suite_name, 0)
-                        )
 
                     # 5. STEP 5: Re-calculate prioritization ranks for this specific suite
                     cursor.execute("""
