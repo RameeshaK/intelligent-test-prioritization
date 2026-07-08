@@ -230,7 +230,19 @@ if st.session_state.active_page == "Dashboard":
                     conn.commit()
                     conn.close()
 
+                    # ... (Keep all your Step 5 ranking updates exactly as they are)
+
+                    conn.commit()
+                    conn.close()
+
+                    # 1. Show the success message
                     st.success(f"✔️ Processing sequence complete! Test scenarios appended to scope collection: {project_name} ➔ {suite_name}.")
+                    
+                    # 2. Add a quick visual pause, then force the screen to refresh and show the table!
+                    import time
+                    time.sleep(1.5)
+                    st.rerun()
+
                 except Exception as e:
                     st.error(f"⚠️ Internal Processing Interrupted: {e}")
                     
