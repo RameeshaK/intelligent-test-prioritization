@@ -227,14 +227,97 @@ elif st.session_state.active_page == "TestGen":
     st.markdown("<div class='blade-title'><h2>🧪 Automated Functional Test Suite Matrix</h2><p>Synthesized system test coverage scenarios generated directly from user story validation logs</p></div>", unsafe_allow_html=True)
     try:
         conn = sqlite3.connect(db_path)
-        df = pd.read_sql_query("""
-            SELECT tc_id AS [Test Case ID], test_scenario AS [Scenario Context], test_objective AS [Objective Goals],
-                   test_steps AS [Step Vectors], expected_result AS [Expected Bounds], test_case_type AS [Type Profile]
-            FROM GeneratedTestCases
-        """, conn)
+        cursor = conn.cursor()
+        
+        # Inspect columns for GeneratedTestCases
+        cursor.execute("PRAGMA table_info(GeneratedTestCases)")
+        tc_columns = [row[1] for row in cursor.fetchall()]
+        
+        tc_id_col = "tc_id" if "tc_id" in tc_columns else ("test_case_id" if "test_case_id" in tc_columns else ("id" if "id" in tc_columns else tc_columns[0]))
+        scenario_col = "test_scenario" if "test_scenario" in tc_columns else "scenario"
+        objective_col = "test_objective" if "test_objective" in tc_columns else "objective"
+        steps_col = "test_steps" if "test_steps" in tc_columns else "steps"
+        expected_col = "expected_result" if "expected_result" in tc_columns else "expected"
+        type_col = "test_case_type" if "test_case_type" in tc_columns else "type"
+
+        query = f"""
+            SELECT 
+                {tc_id_col} AS [Test Case ID], 
+                {scenario_col} AS [Scenario Context], 
+                {objective_col} AS [Objective Goals]
+        """
+        if steps_col in tc_columns: query += f", {steps_col} AS [Step Vectors]"
+        if expected_col in tc_columns: query += f", {expected_col} AS [Expected Bounds]"
+        if type_col in tc_columns: query += f", {type_col} AS [Type Profile]"
+        
+        query += " FROM GeneratedTestCases"
+        
+        df = pd.read_sql_query(query, conn)
         conn.close()
+        
         if df.empty:
             st.info("ℹ️ Optimization vectors empty. Please initiate a dashboard execution loop.")
+        else:
+            st.dataframe(df, use_container_width=True, hide_index=True)
+    except Exception as e:
+        st.error(f"❌ Database Link Offline: {e}")
+
+# ==========================================
+# VIEW F: OPTIMIZATION QUEUE PRIORITY
+# ==========================================
+elif st.session_state.active_page == "Prioritization":
+    st.markdown("<div class='blade-title'><h2>⭐ Test Optimization & Execution Queue Prioritization Matrix</h2><p>Calculated queue hierarchy maps ordered execution indexes derived from the analytics engine</p></div>", unsafe_allow_html=True)
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # 1. Inspect GeneratedTestCases
+        cursor.execute("PRAGMA table_info(GeneratedTestCases)")
+        tc_columns = [row[1] for row in cursor.fetchall()]
+        tc_scenario_col = "test_scenario" if "test_scenario" in tc_columns else "scenario"
+        tc_rank_col = "final_rank" if "final_rank" in tc_columns else "rank"
+        tc_score_col = "calculated_priority_score" if "calculated_priority_score" in tc_columns else "priority_score"
+        tc_req_fk = "requirement_id" if "requirement_id" in tc_columns else tc_columns[1]
+        tc_pred_fk = "prediction_id" if "prediction_id" in tc_columns else "prediction_id"
+
+        # 2. Inspect Requirements
+        cursor.execute("PRAGMA table_info(Requirements)")
+        req_columns = [row[1] for row in cursor.fetchall()]
+        req_id_col = "id" if "id" in req_columns else ("requirement_id" if "requirement_id" in req_columns else req_columns[0])
+        req_title_col = "title" if "title" in req_columns else req_columns[1]
+
+        # 3. Inspect Predictions
+        cursor.execute("PRAGMA table_info(Predictions)")
+        pred_columns = [row[1] for row in cursor.fetchall()]
+        pred_id_col = "prediction_id" if "prediction_id" in pred_columns else pred_columns[0]
+        pred_risk_col = "predicted_risk_level" if "predicted_risk_level" in pred_columns else "risk_level"
+
+        # Build clean dynamic join string
+        query = f"""
+            SELECT 
+                tc.{tc_rank_col} AS [Execution Rank], 
+                r.{req_title_col} AS [Requirement Target],
+                tc.{tc_scenario_col} AS [Optimized Test Target]
+        """
+        if pred_risk_col in pred_columns and tc_pred_fk in tc_columns:
+            query += f", p.{pred_risk_col} AS [Engine Risk Profile]"
+        if tc_score_col in tc_columns:
+            query += f", tc.{tc_score_col} AS [Priority Matrix Score]"
+            
+        query += f"""
+            FROM GeneratedTestCases tc
+            JOIN Requirements r ON tc.{tc_req_fk} = r.{req_id_col}
+        """
+        if pred_risk_col in pred_columns and tc_pred_fk in tc_columns:
+            query += f" JOIN Predictions p ON tc.{tc_pred_fk} = p.{pred_id_col}"
+            
+        query += f" ORDER BY tc.{tc_rank_col} ASC"
+        
+        df = pd.read_sql_query(query, conn)
+        conn.close()
+        
+        if df.empty:
+            st.info("ℹ️ Queue matrix processing clear. No priority sequences currently cached.")
         else:
             st.dataframe(df, use_container_width=True, hide_index=True)
     except Exception as e:
