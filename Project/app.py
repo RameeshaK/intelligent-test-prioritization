@@ -160,11 +160,10 @@ if st.session_state.active_page == "Dashboard":
                     )
                     requirement_id = cursor.lastrowid
 
-# 2. STEP 2: NLP Ingestion (Explicitly Populates Tokens AND Lemmas Columns)
+                    # 2. STEP 2: NLP Ingestion (Explicitly Populates Tokens AND Lemmas Columns)
                     cleaned_tokens = " ".join(re.findall(r'\w+', user_story_input.lower()[:100]))
                     current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-                    # Using INSERT OR REPLACE solves the UNIQUE constraint issue for re-runs
                     cursor.execute(
                         """
                         INSERT OR REPLACE INTO NLPResults (requirement_id, cleaned_text, tokens, lemmas, processed_at) 
@@ -177,6 +176,7 @@ if st.session_state.active_page == "Dashboard":
                     mock_conf = float(np.round(np.random.uniform(0.82, 0.99), 4))
                     mock_risk = np.random.choice(["High", "Medium", "Low"], p=[0.25, 0.55, 0.20])
 
+                    # Safe handling to ensure prediction_id is always assigned an integer
                     cursor.execute(
                         """
                         INSERT OR REPLACE INTO Predictions (requirement_id, predicted_risk_level, confidence_score, xai_explanation, predicted_at) 
@@ -184,6 +184,12 @@ if st.session_state.active_page == "Dashboard":
                         """,
                         (requirement_id, mock_risk, mock_conf, f"Text pattern density matches baseline risk with {mock_conf*100:.1f}% safety confidence.", current_timestamp)
                     )
+                    
+                    # Explicitly fallback search or fetch to guarantee prediction_id is defined
+                    prediction_id = cursor.lastrowid
+                    if not prediction_id:
+                        cursor.execute("SELECT prediction_id FROM Predictions WHERE requirement_id = ?", (requirement_id,))
+                        prediction_id = cursor.fetchone()[0]
 
                     # 4. STEP 4: Automated Functional Test Scenario Synthesizer
                     scenarios = [
