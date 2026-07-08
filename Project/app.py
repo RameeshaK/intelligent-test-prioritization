@@ -261,34 +261,43 @@ if st.session_state.active_page == "Dashboard":
                 except Exception as e:
                     st.error(f"⚠️ Internal Processing Interrupted: {e}")
 
-    # Display Scope Snapshot Output & Export Interface (Uses safe context view_conn)
+    # Display Scope Snapshot Output & Export Interface (With absolute safe check for columns)
     st.markdown("---")
     st.markdown(f"### 📊 Scope Matrix Overview: <span style='color:#005a9e;'>{project_name}</span> ➔ <span style='color:#107c41;'>{suite_name}</span>", unsafe_allow_html=True)
     try:
         view_conn = sqlite3.connect(db_path)
+        view_cursor = view_conn.cursor()
         
-        # Dynamically filters to display only rows bound to your active user inputs
-        df_suite = pd.read_sql_query(f"""
-            SELECT final_rank AS [Execution Rank], test_scenario AS [Optimized Test Target], calculated_priority_score AS [Priority Score Matrix]
-            FROM GeneratedTestCases 
-            WHERE project_name = '{project_name}' 
-              AND suite_name = '{suite_name}'
-              AND requirement_id = (SELECT MAX(requirement_id) FROM Requirements WHERE project_name='{project_name}' AND suite_name='{suite_name}')
-            ORDER BY final_rank ASC
-        """, view_conn)
-        view_conn.close()
+        # Proactively check schema columns before querying to prevent 'no such column' errors
+        view_cursor.execute("PRAGMA table_info(GeneratedTestCases)")
+        existing_cols = [col[1] for col in view_cursor.fetchall()]
         
-        if df_suite.empty:
-            st.info("ℹ️ Target scope bucket is currently empty. Run an ingestion cycle above to add test records.")
+        if "project_name" not in existing_cols or "suite_name" not in existing_cols:
+            st.info("ℹ️ Database schema initialization pending. Run your first complete ingestion loop above to structure metrics.")
+            view_conn.close()
         else:
-            st.dataframe(df_suite, use_container_width=True, hide_index=True)
-            st.download_button(
-                label="📥 Download Isolated Prioritized Test Suite Matrix (.CSV)",
-                data=df_suite.to_csv(index=False).encode('utf-8'),
-                file_name=f"{project_name.lower()}_{suite_name.lower()}_prioritization_matrix.csv",
-                mime="text/csv",
-                use_container_width=True
-            )
+            # Dynamically filters to display only rows bound to your active user inputs
+            df_suite = pd.read_sql_query(f"""
+                SELECT final_rank AS [Execution Rank], test_scenario AS [Optimized Test Target], calculated_priority_score AS [Priority Score Matrix]
+                FROM GeneratedTestCases 
+                WHERE project_name = '{project_name}' 
+                  AND suite_name = '{suite_name}'
+                  AND requirement_id = (SELECT MAX(requirement_id) FROM Requirements WHERE project_name='{project_name}' AND suite_name='{suite_name}')
+                ORDER BY final_rank ASC
+            """, view_conn)
+            view_conn.close()
+            
+            if df_suite.empty:
+                st.info("ℹ️ Target scope bucket is currently empty. Run an ingestion cycle above to add test records.")
+            else:
+                st.dataframe(df_suite, use_container_width=True, hide_index=True)
+                st.download_button(
+                    label="📥 Download Isolated Prioritized Test Suite Matrix (.CSV)",
+                    data=df_suite.to_csv(index=False).encode('utf-8'),
+                    file_name=f"{project_name.lower()}_{suite_name.lower()}_prioritization_matrix.csv",
+                    mime="text/csv",
+                    use_container_width=True
+                )
     except Exception as e:
         st.error(f"⚠️ Error displaying active data engine: {e}")
 
