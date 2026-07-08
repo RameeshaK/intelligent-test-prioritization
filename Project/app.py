@@ -8,6 +8,20 @@ import numpy as np
 from datetime import datetime
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+# 1. Define the professional pages using the modern Streamlit Page API
+home_page = st.Page("app.py", title="Home Dashboard", icon="🏠", default=True)
+req_page = st.Page("pages/1_📄_Requirements.py", title="Requirements Explorer", icon="📄")
+nlp_page = st.Page("pages/2_🧠_NLP_Processing.py", title="NLP Parsing Pipeline", icon="🧠")
+
+# You can add your remaining pages here as well:
+# pred_page = st.Page("pages/3_🤖_Prediction.py", title="ML Risk Engine", icon="🤖")
+# test_page = st.Page("pages/4_🧪_Test_Generation.py", title="Automated Test Suite", icon="🧪")
+# matrix_page = st.Page("pages/5_⭐_Prioritization.py", title="Optimization Queue", icon="⭐")
+
+# 2. Declare the uniform sidebar structure (This keeps it perfectly constant!)
+pg = st.navigation([home_page, req_page, nlp_page])
+
+# 3. Configure the universal page layouts
 st.set_page_config(
     page_title="Intelligent Test Case Prioritization Framework",
     page_icon="🔬",
@@ -22,24 +36,13 @@ models_dir = "Project/models"
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
-# --- NATIVE SIDEBAR BRANDING STYLES ---
+# --- FRONTEND CUSTOM COSMETIC ALIGNMENTS ---
 st.markdown("""
 <style>
-    /* Global Clean Typography Reset */
     html, body, [data-testid="stAppViewContainer"], .main {
         font-family: "Segoe UI", -apple-system, sans-serif !important;
         background-color: #f8f9fa !important;
     }
-    
-    /* Native Sidebar Menu Link Customizations */
-    [data-testid="stSidebarNav"] {
-        padding-top: 20px !important;
-    }
-    [data-testid="stSidebarNav"] ul {
-        padding-top: 10px !important;
-    }
-    
-    /* Topbar Header Design */
     .app-header {
         background-color: #24292e; 
         padding: 16px 24px; 
@@ -51,7 +54,6 @@ st.markdown("""
         position: relative;
         z-index: 999999;
     }
-    
     .blade-title {
         border-left: 4px solid #005a9e; 
         padding-left: 16px; 
@@ -81,7 +83,14 @@ if not st.session_state.authenticated:
                     st.error("❌ Access Denied.")
     st.stop()
 
-# --- MAIN DASHBOARD WORKSPACE PANELS ---
+# --- RUN THE MODERN NAVIGATION MATRIX ---
+# If we are on a subpage, this executes that specific file while preserving the navigation tree!
+if st.session_state.authenticated:
+    if pg != home_page:
+        pg.run()
+        st.stop()
+
+# --- MAIN DASHBOARD WORKSPACE PANELS (Only rendered when on home_page) ---
 st.markdown("<div class='app-header'><div style='font-weight: 600;'>🔬 Automated Optimization Engine &nbsp;|&nbsp; <span style='font-weight: 300;'>MSc Dissertation Research Framework</span></div><div style='font-size: 13px;'>👤 admin@university.edu</div></div>", unsafe_allow_html=True)
 st.markdown("<div class='blade-title'><h2>📋 Software Requirements Backlog Repository</h2><p>Parse natural language user stories dynamically into prioritized continuous testing queues.</p></div>", unsafe_allow_html=True)
 
