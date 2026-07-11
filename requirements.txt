@@ -1,3 +1,5 @@
 streamlit==1.35.0
 pandas==2.2.2
 numpy==1.26.4
+# Force Streamlit to use basic internal pooling rather than crashing C-compiled helpers
+watchdog==4.0.0
