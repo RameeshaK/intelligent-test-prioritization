@@ -2,45 +2,50 @@ import streamlit as st
 import pandas as pd
 import re
 
-# Set Streamlit Page Config
+# Set Streamlit Page Configuration
 st.set_page_config(
-    page_title="AI-Powered Test Prioritization & Generation System",
-    page_icon="🤖",
+    page_title="AI-Driven Test Prioritization Framework",
+    page_icon="🧪",
     layout="wide"
 )
 
-# --- INTELLIGENT ENGINE: Dynamic Feature & Domain Extractor ---
+# --- INTELLIGENT ENGINE: Safe Dynamic Context & Entity Extractor ---
 def extract_story_context(user_story):
     """
     Parses raw user story using pattern matching & keyword abstraction 
-    to extract domain concepts, actions, and actors dynamically.
+    to extract domain concepts, actions, and actors dynamically without crashing.
     """
-    text = user_story.strip().lower()
+    text = user_story.strip() if user_story else ""
+    text_lower = text.lower()
     
     # Extract "Role/Actor"
-    role_match = re.search(r"as a[n]? ([^,]+)", text)
-    role = role_match.group(1).title() if role_match else "User"
+    role_match = re.search(r"as a[n]? ([^,]+)", text_lower)
+    role = role_match.group(1).title().strip() if role_match else "User"
     
     # Extract "Action / Want"
-    want_match = re.search(r"i want to ([^so that]+)", text)
-    action = want_match.group(1).strip() if want_match else "perform action"
+    want_match = re.search(r"i want to ([^so that.]+)", text_lower)
+    if want_match:
+        action = want_match.group(1).strip()
+    else:
+        action = text if text else "perform workflow"
     
     # Extract "Goal / So that"
-    so_that_match = re.search(r"so that ([^.]+)", text)
+    so_that_match = re.search(r"so that ([^.]+)", text_lower)
     goal = so_that_match.group(1).strip() if so_that_match else "achieve intended outcome"
 
     # Identify Domain Keywords for tailored case generation
-    keywords = re.findall(r'\b[a-zA-Z]{4,}\b', text)
-    stopwords = {"want", "that", "this", "from", "with", "have", "user", "system", "into", "page", "able"}
+    keywords = re.findall(r'\b[a-zA-Z]{4,}\b', text_lower)
+    stopwords = {"want", "that", "this", "from", "with", "have", "user", "system", "into", "page", "able", "would", "like"}
     domain_terms = [kw.title() for kw in keywords if kw not in stopwords]
     
-    main_target = domain_terms[0] if domain_terms else "System Module"
+    main_target = domain_terms[0] if domain_terms else "System Component"
     
+    # Guarantee no None values are returned
     return {
-        "role": role,
-        "action": action,
-        "goal": goal,
-        "target": main_target,
+        "role": role or "User",
+        "action": action or "execute scenario",
+        "goal": goal or "complete task",
+        "target": main_target or "Module",
         "terms": domain_terms
     }
 
@@ -109,13 +114,13 @@ def generate_intelligent_test_cases(selected_scenario, story_ctx):
             "Test Case ID": "TC_POS_01",
             "Category": "Positive",
             "Test Case Description": f"Verify {role} can successfully {action} with valid inputs.",
-            "Preconditions": f"{role} is logged in and authorized to access {target}.",
+            "Preconditions": f"{role} is authenticated and authorized to access {target}.",
             "Expected Result": f"System processes action smoothly, allowing user to {goal}."
         },
         {
             "Test Case ID": "TC_POS_02",
             "Category": "Positive",
-            "Test Case Description": f"Verify database/session state correctly reflects changes after {action}.",
+            "Test Case Description": f"Verify database and session state correctly reflect changes after {action}.",
             "Preconditions": f"Core execution of {action} completed successfully.",
             "Expected Result": f"Data records for {target} update in real time without corruption."
         },
@@ -124,16 +129,16 @@ def generate_intelligent_test_cases(selected_scenario, story_ctx):
         {
             "Test Case ID": "TC_NEG_01",
             "Category": "Negative",
-            "Test Case Description": f"Verify behavior when {role} submits invalid or incomplete data while trying to {action}.",
+            "Test Case Description": f"Verify system behavior when {role} submits invalid or incomplete data while trying to {action}.",
             "Preconditions": f"{role} navigates to {target} workflow.",
-            "Expected Result": "System rejects submission and displays clear, actionable error validation messages."
+            "Expected Result": "System rejects submission and displays clear, actionable validation error messages."
         },
         {
             "Test Case ID": "TC_NEG_02",
             "Category": "Negative",
             "Test Case Description": f"Verify unauthorized or unauthenticated users attempting to {action}.",
-            "Preconditions": "User session is invalid or expired.",
-            "Expected Result": "System blocks access, redirects to login/authorization page, and logs security event."
+            "Preconditions": "User session is invalid, missing permissions, or expired.",
+            "Expected Result": "System blocks execution, redirects to login/authorization page, and logs security event."
         },
 
         # --- EDGE / BOUNDARY TEST CASES ---
@@ -148,8 +153,8 @@ def generate_intelligent_test_cases(selected_scenario, story_ctx):
             "Test Case ID": "TC_EDGE_02",
             "Category": "Edge Case",
             "Test Case Description": f"Verify behavior when {role} rapidly clicks action triggers or experiences intermittent network disconnection during {action}.",
-            "Preconditions": f"{action} is in progress.",
-            "Expected Result": "Action button disables during request processing to prevent duplicate submissions; network timeout handles gracefully."
+            "Preconditions": f"{action} request is initiated.",
+            "Expected Result": "Action button disables during processing to prevent duplicate submissions; network timeout handles gracefully."
         }
     ]
     return pd.DataFrame(test_cases)
@@ -159,7 +164,7 @@ def generate_intelligent_test_cases(selected_scenario, story_ctx):
 st.title("🤖 AI-Driven Test Prioritization & Intelligent Generation Framework")
 st.markdown("---")
 
-# Session state management
+# Session state initialization
 if "story_ctx" not in st.session_state:
     st.session_state.story_ctx = None
 if "scenarios_df" not in st.session_state:
@@ -170,7 +175,7 @@ tab_scenarios, tab_detailed_cases = st.tabs([
     "🔍 2. Deep Test Case Generation"
 ])
 
-# --- TAB 1: High-Level Scenarios ---
+# --- TAB 1: High-Level Test Scenarios ---
 with tab_scenarios:
     st.header("Input Any User Story")
     
@@ -184,7 +189,7 @@ with tab_scenarios:
     
     if st.button("🚀 Analyze Story & Generate Scenarios", type="primary"):
         if user_story.strip():
-            # Run Intelligent Extraction & Generation
+            # Run Extraction & Generation
             ctx = extract_story_context(user_story)
             scenarios = generate_intelligent_scenarios(ctx)
             
@@ -199,9 +204,13 @@ with tab_scenarios:
         st.subheader("🎯 Prioritized Scenarios Matrix")
         
         ctx = st.session_state.story_ctx
-        st.caption(f"**Extracted Role:** `{ctx['role']}` | **Core Action:** `{ctx['action']}` | **Target Module:** `{ctx['target']}`")
+        if ctx:
+            role = ctx.get('role', 'User')
+            action = ctx.get('action', 'Action')
+            target = ctx.get('target', 'Module')
+            st.caption(f"**Extracted Role:** `{role}` | **Core Action:** `{action}` | **Target Module:** `{target}`")
         
-        # Color styling
+        # Risk level color formatting helper
         def color_risk(val):
             if val == "High":
                 return "background-color: #ff4b4b; color: white; font-weight: bold;"
@@ -214,9 +223,9 @@ with tab_scenarios:
         
         st.info("💡 Navigate to **'2. Deep Test Case Generation'** tab to expand any scenario into Positive, Negative, and Edge test cases.")
 
-# --- TAB 2: Granular Test Cases ---
+# --- TAB 2: Detailed Test Case Breakdown ---
 with tab_detailed_cases:
-    st.header("Expand Scenarios into Detailed Executable Test Cases")
+    st.header("Expand Scenarios into Executable Test Cases")
     
     if st.session_state.scenarios_df is None:
         st.warning("⚠️ Please analyze a user story in Tab 1 first.")
@@ -224,7 +233,7 @@ with tab_detailed_cases:
         scenarios_list = st.session_state.scenarios_df["Test Scenario"].tolist()
         
         selected_scenario = st.selectbox(
-            "Select a Test Scenario to expand:",
+            "Select a High-Level Scenario to derive detailed test cases:",
             scenarios_list
         )
         
@@ -234,17 +243,17 @@ with tab_detailed_cases:
             
             # Category Filter
             categories = st.multiselect(
-                "Filter Case Types:",
+                "Filter Case Categories:",
                 options=["Positive", "Negative", "Edge Case"],
                 default=["Positive", "Negative", "Edge Case"]
             )
             
             filtered_tc_df = tc_df[tc_df["Category"].isin(categories)]
             
-            st.subheader(f"🧪 Test Cases for Scenario: *'{selected_scenario}'*")
+            st.subheader(f"🧪 Test Cases for: *'{selected_scenario}'*")
             st.dataframe(filtered_tc_df, use_container_width=True)
             
-            # CSV Download Option
+            # Export Option
             csv = filtered_tc_df.to_csv(index=False).encode('utf-8')
             st.download_button(
                 label="📥 Export Generated Test Cases (CSV)",
