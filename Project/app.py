@@ -22,7 +22,6 @@ def load_ml_pipeline():
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     models_dir = os.path.join(base_dir, "Project", "models")
     
-    # Fallback paths if directory structure varies
     if not os.path.exists(models_dir):
         models_dir = os.path.join(os.getcwd(), "Project", "models")
 
@@ -52,17 +51,13 @@ def predict_user_story_risk(user_story):
     Random Forest Classifier to predict real risk level & confidence.
     """
     if not is_model_loaded or rf_model is None:
-        return "Medium", 0.50 # Default fallback if models fail to load
+        return "Medium", 0.50
 
-    # Vectorize raw input text using trained TF-IDF
     features = vectorizer.transform([user_story])
-    
-    # Predict using Random Forest
     prediction_idx = rf_model.predict(features)[0]
     probabilities = rf_model.predict_proba(features)[0]
     confidence = float(np.max(probabilities))
     
-    # Decode predicted label
     if hasattr(label_encoder, 'inverse_transform'):
         predicted_label = label_encoder.inverse_transform([prediction_idx])[0]
     else:
@@ -73,10 +68,6 @@ def predict_user_story_risk(user_story):
 
 # --- 3. DYNAMIC SCENARIO & TEST CASE GENERATOR ---
 def ml_generate_scenarios(user_story, predicted_risk, confidence):
-    """
-    Synthesizes ML-driven test scenarios based on feature vector analysis 
-    and model risk assessment.
-    """
     words = [w.capitalize() for w in re.findall(r'\b[a-zA-Z]{4,}\b', user_story) 
              if w.lower() not in {"want", "that", "this", "from", "with", "have", "user", "system", "into", "page"}]
     
@@ -108,9 +99,6 @@ def ml_generate_scenarios(user_story, predicted_risk, confidence):
     return pd.DataFrame(scenarios)
 
 def ml_generate_test_cases(selected_scenario, user_story):
-    """
-    Generates structured test cases for chosen scenario.
-    """
     cases = [
         {
             "Test Case ID": "TC_POS_01",
@@ -148,7 +136,6 @@ tab_scenarios, tab_cases = st.tabs([
     "🧪 2. Detailed Test Cases Derivation"
 ])
 
-# Initialize Session State
 if "scenarios_df" not in st.session_state:
     st.session_state.scenarios_df = None
 if "current_story" not in st.session_state:
@@ -167,10 +154,7 @@ with tab_scenarios:
         if input_story.strip():
             st.session_state.current_story = input_story
             
-            # Run ML Model Risk Prediction
             risk_class, proba = predict_user_story_risk(input_story)
-            
-            # Build Scenarios
             scenarios_df = ml_generate_scenarios(input_story, risk_class, proba)
             st.session_state.scenarios_df = scenarios_df
             
@@ -181,15 +165,23 @@ with tab_scenarios:
     if st.session_state.scenarios_df is not None:
         st.subheader("🎯 Model Output: Test Scenarios Prioritization Matrix")
         
-        def highlight_risk(val):
-            if "High" in str(val):
-                return "background-color: #ff4b4b; color: white; font-weight: bold;"
-            elif "Medium" in str(val):
-                return "background-color: #ffa726; color: black; font-weight: bold;"
-            return "background-color: #66bb6a; color: white; font-weight: bold;"
+        def highlight_risk(col):
+            styles = []
+            for val in col:
+                val_str = str(val)
+                if "High" in val_str:
+                    styles.append("background-color: #ff4b4b; color: white; font-weight: bold;")
+                elif "Medium" in val_str:
+                    styles.append("background-color: #ffa726; color: black; font-weight: bold;")
+                else:
+                    styles.append("background-color: #66bb6a; color: white; font-weight: bold;")
+            return styles
 
-        styled_df = st.session_state.scenarios_df.style.map(highlight_risk, subset=["ML Predicted Risk"])
-        st.dataframe(styled_df, use_container_width=True)
+        try:
+            styled_df = st.session_state.scenarios_df.style.apply(highlight_risk, subset=["ML Predicted Risk"], axis=0)
+            st.dataframe(styled_df, use_container_width=True)
+        except Exception:
+            st.dataframe(st.session_state.scenarios_df, use_container_width=True)
 
 with tab_cases:
     st.header("Generate Detailed Test Suite")
