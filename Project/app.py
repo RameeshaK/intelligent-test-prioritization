@@ -4,6 +4,7 @@ import numpy as np
 import pickle
 import os
 import re
+import joblib
 
 # Set Page Config
 st.set_page_config(
@@ -17,7 +18,7 @@ st.set_page_config(
 def load_ml_pipeline():
     """
     Loads pre-trained TF-IDF Vectorizer, Machine Learning Classifier, 
-    and Label Encoder from project model artifacts.
+    and Label Encoder safely using joblib/pickle.
     """
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     models_dir = os.path.join(base_dir, "Project", "models")
@@ -30,17 +31,28 @@ def load_ml_pipeline():
         model_path = os.path.join(models_dir, "random_forest_model.pkl")
         encoder_path = os.path.join(models_dir, "label_encoder.pkl")
         
-        with open(vec_path, "rb") as f:
-            vectorizer = pickle.load(f)
+        # Check if file is a Git LFS pointer instead of actual binary
         with open(model_path, "rb") as f:
-            model = pickle.load(f)
-        with open(encoder_path, "rb") as f:
-            label_encoder = pickle.load(f)
+            first_bytes = f.read(10)
+            if b"version" in first_bytes:
+                return None, None, None, "Model file is a Git LFS pointer file. Re-upload raw .pkl models to GitHub."
+
+        # Load using joblib for sklearn compatibility
+        try:
+            vectorizer = joblib.load(vec_path)
+            model = joblib.load(model_path)
+            label_encoder = joblib.load(encoder_path)
+        except Exception:
+            with open(vec_path, "rb") as f:
+                vectorizer = pickle.load(f)
+            with open(model_path, "rb") as f:
+                model = pickle.load(f)
+            with open(encoder_path, "rb") as f:
+                label_encoder = pickle.load(f)
             
         return vectorizer, model, label_encoder, True
     except Exception as e:
         return None, None, None, str(e)
-
 vectorizer, rf_model, label_encoder, is_model_loaded = load_ml_pipeline()
 
 
